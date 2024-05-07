@@ -1,9 +1,7 @@
-import argparse
 import os
 import pathlib
 import re
 import shutil
-import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from typing import Tuple, Union, List, Callable
@@ -197,8 +195,7 @@ class EADCProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_rename_mapping = {
         MRSeriesRenameEnum.eADC: re.compile('.*(eADC).*', re.IGNORECASE),
     }
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_3D,
-                                                                          NullEnum.NULL)
+    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_3D,NullEnum.NULL)
 
     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         """Process a DICOM dataset for eADC series renaming.
@@ -380,7 +377,7 @@ class ESWANProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_group_fn_list = []
 
     series_rename_dict = {
-        MRSeriesRenameEnum.eSWAN: {SeriesEnum.eSWAN},
+        MRSeriesRenameEnum.eSWAN: {SeriesEnum.eSWAN,SeriesEnum.ORIGINAL},
         MRSeriesRenameEnum.eSWANmIP: {SeriesEnum.eSWAN, SeriesEnum.mIP},
     }
 
@@ -399,10 +396,28 @@ class ESWANProcessingStrategy(MRRenameSeriesProcessingStrategy):
         image_type = dicom_ds.get((0x08, 0x08))
         instance_creation_time = dicom_ds.get((0x08, 0x13))
         if image_type and instance_creation_time is not None:
-            if image_type.value[-1] == 'MIN IP':
+            if (image_type.value[-1] == 'MIN IP' or image_type.value[-1] == 'REFORMATTED') and \
+                    instance_creation_time is not None:
                 return SeriesEnum.mIP
 
-        # MRSeriesRenameEnum.eSWANmag
+        return NullEnum.NULL
+
+    @classmethod
+    def get_original(cls, dicom_ds: FileDataset) -> Union[SeriesEnum, NullEnum]:
+        """Extract mIP series group.
+
+        Parameters:
+        dicom_ds : FileDataset
+            The DICOM dataset to process.
+
+        Returns:
+        Union[SeriesEnum, NullEnum]
+            The mIP series group or NullEnum.NULL if not found.
+        """
+        image_type = dicom_ds.get((0x08, 0x08))
+        if image_type is not None:
+            if image_type.value[0] == 'ORIGINAL':
+                return SeriesEnum.ORIGINAL
         return NullEnum.NULL
 
     @classmethod
@@ -434,6 +449,7 @@ class ESWANProcessingStrategy(MRRenameSeriesProcessingStrategy):
         if len(cls.series_group_fn_list) == 0:
             cls.series_group_fn_list.append(cls.get_eswan)
             cls.series_group_fn_list.append(cls.get_mIP)
+            cls.series_group_fn_list.append(cls.get_original)
         return cls.series_group_fn_list
 
     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
@@ -1212,144 +1228,6 @@ class T2ProcessingStrategy(MRRenameSeriesProcessingStrategy):
         return NullEnum.NULL
 
 
-# class ASLProcessingStrategy(MRRenameSeriesProcessingStrategy):
-#     """A processing strategy for ASL (Arterial Spin Labeling) series renaming based on DICOM attributes.
-#
-#     Attributes:
-#     series_rename_mapping : dict
-#         Mapping of series descriptions to corresponding regex patterns and ASLSEQSeriesRenameEnum values.
-#     type_3D_series_rename_mapping : dict
-#         Mapping of series descriptions to corresponding regex patterns for 3D acquisitions.
-#     type_3D_series_rename_dict : dict
-#         Mapping of ASLSEQSeriesRenameEnum values to sets of attributes for 3D acquisitions.
-#     mr_acquisition_type : tuple
-#         Tuple containing MR acquisition types and NullEnum, in this case, only 3D.
-#     series_group_fn_list : list
-#         List containing functions for extracting series group information.
-#     """
-#
-#     # ASLSEQSeriesRenameEnum.ASLSEQATT: re.compile('([(]Transit delay[)] multi-Delay ASL SEQ)', re.IGNORECASE),
-#     # ASLSEQSeriesRenameEnum.ASLSEQATT: re.compile('([(]Transit delay[)]) (multi-Delay ASL SEQ|TDelay_SEQ)',
-#     #                                              re.IGNORECASE),
-#     # ASLSEQSeriesRenameEnum.ASLSEQATT_COLOR: re.compile('([(]Color Transit delay[)] multi-Delay ASL SEQ)',
-#     #                                                    re.IGNORECASE),
-#     # ASLSEQSeriesRenameEnum.ASLSEQCBF: re.compile('([(]Transit corrected CBF[)] multi-Delay ASL SEQ)',
-#     #                                              re.IGNORECASE),
-#     # ASLSEQSeriesRenameEnum.ASLSEQCBF_COLOR: re.compile('([(]Color Transit corrected CBF[)] multi-Delay ASL SEQ)',
-#     #                                                    re.IGNORECASE),
-#     # ASLSEQSeriesRenameEnum.ASLSEQPW: re.compile('([(]per del, mean PW, REF[)] multi-Delay ASL SEQ)', re.IGNORECASE),
-#
-#     # multi-Delay ASL SEQ  TDelay_SEQ
-#     series_rename_mapping = {
-#         ASLSEQSeriesRenameEnum.ASLSEQ: re.compile('(multi-Delay ASL SEQ)',
-#                                                   re.IGNORECASE),
-#         ASLSEQSeriesRenameEnum.ASLSEQATT: re.compile('([(]Transit delay[)])',
-#                                                      re.IGNORECASE),
-#         ASLSEQSeriesRenameEnum.ASLSEQATT_COLOR: re.compile('([(]Color Transit delay[)])',
-#                                                            re.IGNORECASE),
-#
-#         ASLSEQSeriesRenameEnum.ASLSEQCBF: re.compile('([(]Transit corrected CBF[)])',
-#                                                      re.IGNORECASE),
-#         ASLSEQSeriesRenameEnum.ASLSEQCBF_COLOR: re.compile('([(]Color Transit corrected CBF[)])',
-#                                                            re.IGNORECASE),
-#
-#         ASLSEQSeriesRenameEnum.ASLPROD: re.compile('(3D ASL [(]non-contrast[)])',
-#                                                    re.IGNORECASE),
-#         ASLSEQSeriesRenameEnum.ASLSEQPW: re.compile('([(]per del, mean PW, REF[)])',
-#                                                     re.IGNORECASE),
-#
-#     }
-#     type_3D_series_rename_mapping = series_rename_mapping
-#
-#     type_3D_series_rename_dict = {
-#         ASLSEQSeriesRenameEnum.ASLSEQ: {ASLSEQSeriesRenameEnum.ASLSEQ},
-#         ASLSEQSeriesRenameEnum.ASLSEQATT: {ASLSEQSeriesRenameEnum.ASLSEQATT},
-#         ASLSEQSeriesRenameEnum.ASLSEQATT_COLOR: {ASLSEQSeriesRenameEnum.ASLSEQATT_COLOR},
-#         ASLSEQSeriesRenameEnum.ASLSEQCBF: {ASLSEQSeriesRenameEnum.ASLSEQCBF},
-#         ASLSEQSeriesRenameEnum.ASLSEQCBF_COLOR: {ASLSEQSeriesRenameEnum.ASLSEQCBF_COLOR},
-#         ASLSEQSeriesRenameEnum.ASLPROD: {ASLSEQSeriesRenameEnum.ASLPROD},
-#
-#         ASLSEQSeriesRenameEnum.ASLSEQPW: {ASLSEQSeriesRenameEnum.ASLSEQPW},
-#     }
-#     type_null_series_rename_mapping = {
-#         ASLSEQSeriesRenameEnum.ASLPRODCBF: re.compile(r'.*(?<!r)(CBF).*', re.IGNORECASE),
-#     }
-#     type_null_series_rename_dict = {
-#         ASLSEQSeriesRenameEnum.ASLPRODCBF: {ASLSEQSeriesRenameEnum.ASLPRODCBF},
-#         ASLSEQSeriesRenameEnum.ASLPRODCBF_COLOR: {ASLSEQSeriesRenameEnum.ASLPRODCBF, ASLSEQSeriesRenameEnum.COLOR},
-#     }
-#
-#     mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_3D,)
-#     series_group_fn_list = []
-#
-#     @classmethod
-#     def get_series_group_fn_list(cls):
-#         """Get the list of series group functions.
-#
-#         Returns:
-#         list: List of functions for extracting series group information.
-#         """
-#         if len(cls.series_group_fn_list) == 0:
-#             cls.series_group_fn_list.append(cls.get_conversion_type)
-#         return cls.series_group_fn_list
-#
-#     @classmethod
-#     def get_conversion_type(cls, dicom_ds: FileDataset, ):
-#         # (0008,0064)	Conversion Type	WSD
-#         conversion_type = dicom_ds.get((0x08, 0x64))
-#         if conversion_type:
-#             return ASLSEQSeriesRenameEnum.COLOR
-#         return NullEnum.NULL
-#
-#     def type_process(self, dicom_ds: FileDataset, type_series_rename_mapping, type_series_rename_dict) -> Union[
-#         BaseEnum, MRSeriesRenameEnum]:
-#         """Process the DICOM dataset for ASL series renaming based on acquisition type.
-#
-#         Parameters:
-#         dicom_ds (FileDataset): The DICOM dataset.
-#         type_series_rename_mapping (dict): Mapping of series descriptions to corresponding regex patterns for the acquisition type.
-#         type_series_rename_dict (dict): Mapping of ASLSEQSeriesRenameEnum values to sets of attributes for the acquisition type.
-#
-#         Returns:
-#         Union[BaseEnum, MRSeriesRenameEnum]: The renamed series enumeration or NullEnum.NULL if no match is found.
-#         """
-#         series_description = dicom_ds.get((0x08, 0x103E))
-#         print(series_description.value)
-#         for series_rename_enum, series_pattern in type_series_rename_mapping.items():
-#             match_result = series_pattern.match(series_description.value)
-#             print(series_description.value,match_result)
-#             if match_result:
-#                 series_group_set = set()
-#                 series_group_set.add(series_rename_enum)
-#
-#                 for series_group_fn in self.get_series_group_fn_list():
-#                     item_enum = series_group_fn(dicom_ds=dicom_ds)
-#                     if item_enum is not NullEnum.NULL:
-#                         if isinstance(item_enum, tuple):
-#                             series_group_set.update(item_enum)
-#                         else:
-#                             series_group_set.add(item_enum)
-#                 print('series_group_set', series_group_set)
-#                 for series_rename_enum, series_rename_group_set in type_series_rename_dict.items():
-#                     if series_group_set == series_rename_group_set:
-#                         return series_rename_enum
-#         return NullEnum.NULL
-#
-#     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
-#         """Process the DICOM dataset for ASL series renaming.
-#
-#         Parameters:
-#         dicom_ds (FileDataset): The DICOM dataset.
-#
-#         Returns:
-#         Union[BaseEnum, MRSeriesRenameEnum]: The renamed series enumeration or NullEnum.NULL if no match is found.
-#         """
-#         mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
-#         if mr_acquisition_type_enum == MRAcquisitionTypeEnum.TYPE_3D:
-#             return self.type_process(dicom_ds, self.type_3D_series_rename_mapping, self.type_3D_series_rename_dict)
-#         return NullEnum.NULL
-
-
 class ASLProcessingStrategy(MRRenameSeriesProcessingStrategy):
     """A processing strategy for ASL (Arterial Spin Labeling) series renaming based on DICOM attributes.
 
@@ -1379,63 +1257,60 @@ class ASLProcessingStrategy(MRRenameSeriesProcessingStrategy):
     # ASLSEQSeriesRenameEnum.ASLSEQPW: re.compile('([(]per del, mean PW, REF[)] multi-Delay ASL SEQ)', re.IGNORECASE),
 
     series_rename_mapping = {
-        ASLSEQSeriesRenameEnum.ASLSEQ: re.compile('(multi-Delay ASL SEQ)',
-                                                  re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLSEQATT: re.compile('([(]Transit delay[)])',
-                                                     re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLSEQATT_COLOR: re.compile('([(]Color Transit delay[)])',
-                                                           re.IGNORECASE),
+        ASLSEQSeriesRenameEnum.ASLSEQ: re.compile('(multi-Delay ASL SEQ)',re.IGNORECASE),
 
-        ASLSEQSeriesRenameEnum.ASLSEQCBF: re.compile('([(]Transit corrected CBF[)])',
-                                                     re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLSEQCBF_COLOR: re.compile('([(]Color Transit corrected CBF[)])',
-                                                           re.IGNORECASE),
+        ASLSEQSeriesRenameEnum.ASLSEQATT: re.compile('([(]Transit delay[)])',re.IGNORECASE),
+        ASLSEQSeriesRenameEnum.ASLSEQATT_COLOR: re.compile('([(]Color Transit delay[)])',re.IGNORECASE),
 
-        ASLSEQSeriesRenameEnum.ASLPROD: re.compile('(3D ASL [(]non-contrast[)])',
-                                                   re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLPRODCBF: re.compile(r'.*(?<!r)(CBF).*', re.IGNORECASE),
+        ASLSEQSeriesRenameEnum.ASLSEQCBF: re.compile('([(]Transit corrected CBF[)])',re.IGNORECASE),
+        ASLSEQSeriesRenameEnum.ASLSEQCBF_COLOR: re.compile('([(]Color Transit corrected CBF[)])',re.IGNORECASE),
 
-        ASLSEQSeriesRenameEnum.ASLSEQPW: re.compile('([(]per del, mean PW, REF[)])',
-                                                    re.IGNORECASE),
+        ASLSEQSeriesRenameEnum.ASLSEQPW: re.compile('([(]per del, mean PW, REF[)])',re.IGNORECASE),
+
+        # ASLSEQSeriesRenameEnum.ASLPROD: re.compile('(3D ASL [(]non-contrast[)])',
+        #                                            re.IGNORECASE),
+        ASLSEQSeriesRenameEnum.ASLPROD: re.compile('.*(ASL).*',re.IGNORECASE),
+        ASLSEQSeriesRenameEnum.ASLPRODCBF: re.compile(r'.*((?<!r)CBF|Cerebral Blood Flow).*', re.IGNORECASE),
+
 
     }
     type_3D_series_rename_mapping = {
-        ASLSEQSeriesRenameEnum.ASLSEQ: re.compile('(multi-Delay ASL SEQ)',
-                                                  re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLSEQATT: re.compile('([(]Transit delay[)])',
-                                                     re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLSEQATT_COLOR: re.compile('([(]Color Transit delay[)])',
-                                                           re.IGNORECASE),
+        ASLSEQSeriesRenameEnum.ASLSEQ: re.compile('(multi-Delay ASL SEQ)',re.IGNORECASE),
+        ASLSEQSeriesRenameEnum.ASLSEQATT: re.compile('([(]Transit delay[)])',re.IGNORECASE),
+        ASLSEQSeriesRenameEnum.ASLSEQATT_COLOR: re.compile('([(]Color Transit delay[)])',re.IGNORECASE),
 
-        ASLSEQSeriesRenameEnum.ASLSEQCBF: re.compile('([(]Transit corrected CBF[)])',
-                                                     re.IGNORECASE),
+        ASLSEQSeriesRenameEnum.ASLSEQCBF: re.compile('([(]Transit corrected CBF[)])',re.IGNORECASE),
         ASLSEQSeriesRenameEnum.ASLSEQCBF_COLOR: re.compile('([(]Color Transit corrected CBF[)])',
                                                            re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLPRODCBF: re.compile(r'.*(?<!r)(CBF).*', re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLPROD: re.compile('(3D ASL [(]non-contrast[)])',
-                                                   re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLSEQPW: re.compile('([(]per del, mean PW, REF[)])',
-                                                    re.IGNORECASE),
+        ASLSEQSeriesRenameEnum.ASLSEQPW: re.compile('([(]per del, mean PW, REF[)])',re.IGNORECASE),
 
-
+        ASLSEQSeriesRenameEnum.ASLPROD: re.compile('.*(ASL).*',re.IGNORECASE),
+        ASLSEQSeriesRenameEnum.ASLPRODCBF: re.compile(r'.*((?<!r)CBF|Cerebral Blood Flow).*', re.IGNORECASE),
     }
-
     type_3D_series_rename_dict = {
         ASLSEQSeriesRenameEnum.ASLSEQ: {ASLSEQSeriesRenameEnum.ASLSEQ},
+
         ASLSEQSeriesRenameEnum.ASLSEQATT: {ASLSEQSeriesRenameEnum.ASLSEQATT},
         ASLSEQSeriesRenameEnum.ASLSEQATT_COLOR: {ASLSEQSeriesRenameEnum.ASLSEQATT_COLOR},
+
         ASLSEQSeriesRenameEnum.ASLSEQCBF: {ASLSEQSeriesRenameEnum.ASLSEQCBF},
         ASLSEQSeriesRenameEnum.ASLSEQCBF_COLOR: {ASLSEQSeriesRenameEnum.ASLSEQCBF_COLOR},
-        ASLSEQSeriesRenameEnum.ASLPROD: {ASLSEQSeriesRenameEnum.ASLPROD},
-        ASLSEQSeriesRenameEnum.ASLPRODCBF: {ASLSEQSeriesRenameEnum.ASLPRODCBF},
+
         ASLSEQSeriesRenameEnum.ASLSEQPW: {ASLSEQSeriesRenameEnum.ASLSEQPW},
+
+        ASLSEQSeriesRenameEnum.ASLPROD: {ASLSEQSeriesRenameEnum.ASLPROD,ASLSEQSeriesRenameEnum.ASL},
+        ASLSEQSeriesRenameEnum.ASLPRODCBF: {ASLSEQSeriesRenameEnum.ASLPRODCBF,
+                                            ASLSEQSeriesRenameEnum.ASL,
+                                            ASLSEQSeriesRenameEnum.CBF},
     }
     type_null_series_rename_mapping = {
-        ASLSEQSeriesRenameEnum.ASLPRODCBF: re.compile(r'.*(?<!r)(CBF).*', re.IGNORECASE),
+        ASLSEQSeriesRenameEnum.ASLPRODCBF_COLOR: re.compile(r'.*((?<!r)CBF|SCREENSAVE).*', re.IGNORECASE),
     }
     type_null_series_rename_dict = {
-
-        ASLSEQSeriesRenameEnum.ASLPRODCBF_COLOR: {ASLSEQSeriesRenameEnum.ASLPRODCBF, ASLSEQSeriesRenameEnum.COLOR},
+        ASLSEQSeriesRenameEnum.ASLPRODCBF_COLOR: {ASLSEQSeriesRenameEnum.ASLPRODCBF,
+                                                  ASLSEQSeriesRenameEnum.ASL,
+                                                  ASLSEQSeriesRenameEnum.CBF,
+                                                  ASLSEQSeriesRenameEnum.COLOR},
     }
 
     mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_3D,NullEnum.NULL)
@@ -1450,7 +1325,28 @@ class ASLProcessingStrategy(MRRenameSeriesProcessingStrategy):
         """
         if len(cls.series_group_fn_list) == 0:
             cls.series_group_fn_list.append(cls.get_conversion_type)
+            cls.series_group_fn_list.append(cls.get_asl)
+            cls.series_group_fn_list.append(cls.get_cbf)
         return cls.series_group_fn_list
+
+
+    @classmethod
+    def get_asl(cls, dicom_ds: FileDataset, ):
+        # (0019,109C)	Unknown  Tag &  Data	ASL
+        pulse_sequence_name = dicom_ds.get((0x19, 0x109c))
+        if pulse_sequence_name:
+            if str(pulse_sequence_name.value).lower() == ASLSEQSeriesRenameEnum.ASL.value.lower():
+                return ASLSEQSeriesRenameEnum.ASL
+        return NullEnum.NULL
+
+    @classmethod
+    def get_cbf(cls, dicom_ds: FileDataset, ):
+        # (0019,109C)	Unknown  Tag &  Data	ASL
+        functional_processing_name = dicom_ds.get((0x51, 0x1002))
+        if functional_processing_name:
+            if str(functional_processing_name.value).lower() == ASLSEQSeriesRenameEnum.CBF.value.lower():
+                return ASLSEQSeriesRenameEnum.CBF
+        return NullEnum.NULL
 
     @classmethod
     def get_conversion_type(cls, dicom_ds: FileDataset, ):
@@ -1507,6 +1403,7 @@ class ASLProcessingStrategy(MRRenameSeriesProcessingStrategy):
             return self.type_process(dicom_ds, self.type_null_series_rename_mapping,self.type_null_series_rename_dict)
         return NullEnum.NULL
 
+
 class DSCProcessingStrategy(MRRenameSeriesProcessingStrategy):
     """A processing strategy for DSC (Dynamic Susceptibility Contrast) series renaming based on DICOM attributes.
 
@@ -1526,13 +1423,13 @@ class DSCProcessingStrategy(MRRenameSeriesProcessingStrategy):
     """
 
     series_rename_mapping = {
-        DSCSeriesRenameEnum.DSC: re.compile('.*(AUTOPWI).*', re.IGNORECASE),
+        DSCSeriesRenameEnum.DSC: re.compile('.*(AUTOPWI|Perfusion).*', re.IGNORECASE),
         DSCSeriesRenameEnum.rCBF: re.compile('.*(CBF).*', re.IGNORECASE),
         DSCSeriesRenameEnum.rCBV: re.compile('.*(CBV).*', re.IGNORECASE),
         DSCSeriesRenameEnum.MTT: re.compile('.*(MTT).*', re.IGNORECASE),
     }
     type_2D_series_rename_mapping = {
-        DSCSeriesRenameEnum.DSC: re.compile('.*(AUTOPWI).*', re.IGNORECASE),
+        DSCSeriesRenameEnum.DSC: re.compile('.*(AUTOPWI|Perfusion).*', re.IGNORECASE),
     }
     type_null_series_rename_mapping = {
         DSCSeriesRenameEnum.rCBF: re.compile('.*(CBF).*', re.IGNORECASE),
@@ -1550,7 +1447,7 @@ class DSCProcessingStrategy(MRRenameSeriesProcessingStrategy):
     @classmethod
     def get_functional_processing_name(cls, dicom_ds: FileDataset):
         """Get the functional processing name from the DICOM dataset.
-
+           DSCSeriesRenameEnum.rCBF、DSCSeriesRenameEnum.rCBV、DSCSeriesRenameEnum.MTT
         Parameters:
         dicom_ds (FileDataset): The DICOM dataset.
 
@@ -1632,41 +1529,6 @@ class DSCProcessingStrategy(MRRenameSeriesProcessingStrategy):
         if mr_acquisition_type_enum == NullEnum.NULL:
             return self.type_null_process(dicom_ds)
         return NullEnum.NULL
-
-
-# class CVRProcessingStrategy(MRRenameSeriesProcessingStrategy):
-#     """A processing strategy for CVR (Cerebrovascular Reactivity) series renaming based on DICOM attributes.
-#
-#     Attributes:
-#     series_rename_mapping : dict
-#         Mapping of series descriptions to corresponding regex patterns and MRSeriesRenameEnum values.
-#     mr_acquisition_type : tuple
-#         Tuple containing MR acquisition type 2D and NullEnum.
-#     """
-#
-#     series_rename_mapping = {
-#         MRSeriesRenameEnum.CVR2000_EAR: re.compile('.*(CVR).*(2000).*(ear).*$', re.IGNORECASE),
-#         MRSeriesRenameEnum.CVR2000_EYE: re.compile('.*(CVR).*(2000).*(eye).*$', re.IGNORECASE),
-#         MRSeriesRenameEnum.CVR2000: re.compile('.*(CVR).*(2000).*$', re.IGNORECASE),
-#         MRSeriesRenameEnum.CVR1000: re.compile('.*(CVR).*(1000).*$', re.IGNORECASE),
-#     }
-#     mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_2D,)
-#
-#     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
-#         """Process the DICOM dataset for CVR series renaming.
-#
-#         Parameters:
-#         dicom_ds (FileDataset): The DICOM dataset.
-#
-#         Returns:
-#         Union[BaseEnum, MRSeriesRenameEnum]: The renamed series enumeration or NullEnum.NULL if no match is found.
-#         """
-#         series_description = dicom_ds.get((0x08, 0x103E))
-#         for series_rename_enum, series_pattern in self.series_rename_mapping.items():
-#             match_result = series_pattern.match(series_description.value)
-#             if match_result:
-#                 return series_rename_enum
-#         return NullEnum.NULL
 
 
 class CVRProcessingStrategy(MRRenameSeriesProcessingStrategy):
@@ -2137,50 +1999,3 @@ class ConvertManager:
         value (str): The input path.
         """
         self._input_path = pathlib.Path(value)
-
-
-def parse_arguments():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input', dest='input', type=str, required=True,
-                        help="input the raw dicom folder.\r\n")
-    parser.add_argument('-o', '--output', dest='output', type=str, required=True,
-                        help="output the rename dicom folder.\r\n"
-                             "Example: python rename_folder.py -i input_path -o output_path")
-    parser.add_argument('--work', dest='work', type=int, default=4,
-                        help="Thread count.\r\n"
-                             "Example: python rename_folder.py -i input_path -o output_path --work 8")
-    return parser.parse_args()
-
-
-def get_args():
-    class Args:
-        def __init__(self) -> None:
-            super().__init__()
-            # HDD
-            # self.input = r'D:\00_Chen\Task08\data\study_VCI\raw'
-            # self.input = r'D:\00_Chen\Task08\data\Study_Glymphatics\20230914_10962806_MRI perfusion Glymphatics (-C +C)'
-            # self.input = r'D:\00_Chen\Task08\data\Study_Glymphatics\20230914_10962806_MRI perfusion Glymphatics (-C +C)\fMRI resting(ac-pc)'
-            # self.input = r'D:\00_Chen\Task08\data\Study_Glymphatics\20220616_05470905_MRI perfusion Glymphatics (-C +C)_with 24hr follow'
-            # self.output = r'D:\00_Chen\Task08\data\test\rename_dicom\single'
-            # SSD
-            self.input = r'C:\Users\user\Desktop\test\raw\20230914_10962806_MRI perfusion Glymphatics (-C +C)'
-            self.output = r'C:\Users\user\Desktop\test\rename_dicom_single'
-            self.work = 2
-
-    return Args()
-
-
-if __name__ == '__main__':
-    args = parse_arguments()
-    # args = get_args()
-    output_path = args.output
-    input_path = args.input
-    work = min(2, max(1, args.work))
-    executor = ThreadPoolExecutor(max_workers=work)
-    # executor = ProcessPoolExecutor(max_workers=work)
-    start = time.time()
-    with executor:
-        convert_manager = ConvertManager(input_path=input_path, output_path=output_path)
-        convert_manager.run(executor=executor)
-    end = time.time()
-    print(start, end, end - start)

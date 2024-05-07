@@ -26,21 +26,26 @@ class MRSeriesRenameEnum(BaseEnum):
     CVR2000 = 'CVR2000'
     CVR2000_EAR = 'CVR2000_EAR'
     CVR2000_EYE = 'CVR2000_EYE'
+    RESTING = 'RESTING'
+    RESTING2000 = 'RESTING2000'
 
     DSC_RAW = 'DSC_RAW'
 
     DTI32D = 'DTI32D'
     DTI64D = 'DTI64D'
 
+    ADC = 'ADC'
     DWI = 'DWI'
     DWI0 = 'DWI0'
     DWI1000 = 'DWI1000'
     B_VALUES_1000 = '1000'
     B_VALUES_0 = '0'
-    ADC = 'ADC'
+
+    SWAN = 'SWAN'
+    SWANmIP = 'SWANmIP'
+    SWANPHASE = 'SWANPHASE'
 
     eADC = 'eADC'
-
     eSWAN = 'eSWAN'
     eSWANmag = 'eSWANmag'
     eSWANmIP = 'eSWANmIP'
@@ -54,12 +59,6 @@ class MRSeriesRenameEnum(BaseEnum):
     MRV = 'MRV'
     MRV_SAG = 'MRV_SAG'
 
-    RESTING = 'RESTING'
-    RESTING2000 = 'RESTING2000'
-    SWANPHASE = 'SWANPHASE'
-    SWANmIP = 'SWANmIP'
-    SWAN = 'SWAN'
-
 
 class SeriesEnum(BaseEnum):
     FLAIR = 'FLAIR'
@@ -71,6 +70,7 @@ class SeriesEnum(BaseEnum):
     eSWAN = 'eSWAN'
     mIP = 'mIP'
     mAG = 'mAG'
+    ORIGINAL = 'ORIGINAL'
     SWANPHASE = 1
 
 
@@ -229,11 +229,12 @@ class ASLSEQSeriesRenameEnum(BaseEnum):
     ASLSEQCBF_COLOR = 'ASLSEQCBF_COLOR'
 
     ASLPROD          = 'ASLPROD'
-
     ASLPRODCBF       = 'ASLPRODCBF'
     ASLPRODCBF_COLOR = 'ASLPRODCBF_COLOR'
 
     ASLSEQPW        = 'ASLSEQPW'
+    ASL = 'ASL'
+    CBF = 'CBF'
     COLOR = 'COLOR'
 
 

@@ -113,6 +113,3 @@ if __name__ == '__main__':
         run_list_nifti(output_nifti_path=output_nifti_path)
         print('run_convert_nifti_postprocess')
         run_convert_nifti_postprocess(output_nifti_path)
-    # update rename nifti to sql
-    # update rename nifti to Object Storage
-    # update rename dicom to Orthanc

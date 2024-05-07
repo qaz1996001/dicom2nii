@@ -3,7 +3,7 @@ import pathlib
 from concurrent.futures import ThreadPoolExecutor
 from typing import Union
 
-from dicom2nii.src import SQL_WEB_URL
+from . import SQL_WEB_URL
 
 
 class UploadSqlManager:
@@ -26,11 +26,14 @@ class UploadSqlManager:
         pass
 
     def upload(self, study_path):
-        meta_path = study_path.joinpath('.meta')
+        meta_path      = study_path.joinpath('.meta')
+        meta_path_list = list(meta_path.iterdir())
         for series_path in study_path.iterdir():
             if series_path.is_file():
                 # nii.gz .meta/series.jsonline mapping
-                series_path.name.endswith('nii.gz')
+                if series_path.name.endswith('nii.gz'):
+                    print(series_path)
+
 
             if series_path.is_dir():
                 pass
