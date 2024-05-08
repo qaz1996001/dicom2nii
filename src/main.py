@@ -44,6 +44,8 @@ def run_dicom_rename_mr(executor: ProcessPoolExecutor,
                         ):
     from convert.dicom_rename_mr import ConvertManager
     start = time.time()
+    # convert_manager = ConvertManager(input_path=input_path, output_path=output_path)
+    # convert_manager.run()
     with executor:
         convert_manager = ConvertManager(input_path=input_path, output_path=output_path)
         convert_manager.run(executor=executor)

@@ -1257,23 +1257,16 @@ class ASLProcessingStrategy(MRRenameSeriesProcessingStrategy):
     # ASLSEQSeriesRenameEnum.ASLSEQPW: re.compile('([(]per del, mean PW, REF[)] multi-Delay ASL SEQ)', re.IGNORECASE),
 
     series_rename_mapping = {
-        ASLSEQSeriesRenameEnum.ASLSEQ: re.compile('(multi-Delay ASL SEQ)',re.IGNORECASE),
-
-        ASLSEQSeriesRenameEnum.ASLSEQATT: re.compile('([(]Transit delay[)])',re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLSEQATT_COLOR: re.compile('([(]Color Transit delay[)])',re.IGNORECASE),
-
-        ASLSEQSeriesRenameEnum.ASLSEQCBF: re.compile('([(]Transit corrected CBF[)])',re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLSEQCBF_COLOR: re.compile('([(]Color Transit corrected CBF[)])',re.IGNORECASE),
-
-        ASLSEQSeriesRenameEnum.ASLSEQPW: re.compile('([(]per del, mean PW, REF[)])',re.IGNORECASE),
-
-        # ASLSEQSeriesRenameEnum.ASLPROD: re.compile('(3D ASL [(]non-contrast[)])',
-        #                                            re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLPROD: re.compile('.*(ASL).*',re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLPRODCBF: re.compile(r'.*((?<!r)CBF|Cerebral Blood Flow).*', re.IGNORECASE),
-
-
+        # ASLSEQSeriesRenameEnum.ASLSEQ: re.compile('(multi-Delay ASL SEQ)',re.IGNORECASE),
+        # ASLSEQSeriesRenameEnum.ASLSEQATT: re.compile('([(]Transit delay[)])',re.IGNORECASE),
+        # ASLSEQSeriesRenameEnum.ASLSEQATT_COLOR: re.compile('([(]Color Transit delay[)])',re.IGNORECASE),
+        # ASLSEQSeriesRenameEnum.ASLSEQCBF: re.compile('([(]Transit corrected CBF[)])',re.IGNORECASE),
+        # ASLSEQSeriesRenameEnum.ASLSEQCBF_COLOR: re.compile('([(]Color Transit corrected CBF[)])',re.IGNORECASE),
+        # ASLSEQSeriesRenameEnum.ASLSEQPW: re.compile('([(]per del, mean PW, REF[)])',re.IGNORECASE),
+        # ASLSEQSeriesRenameEnum.ASLPROD: re.compile('.*(ASL).*',re.IGNORECASE),
+        # ASLSEQSeriesRenameEnum.ASLPRODCBF: re.compile(r'.*((?<!r)CBF|Cerebral Blood Flow).*', re.IGNORECASE),
     }
+
     type_3D_series_rename_mapping = {
         ASLSEQSeriesRenameEnum.ASLSEQ: re.compile('(multi-Delay ASL SEQ)',re.IGNORECASE),
         ASLSEQSeriesRenameEnum.ASLSEQATT: re.compile('([(]Transit delay[)])',re.IGNORECASE),
@@ -1307,7 +1300,7 @@ class ASLProcessingStrategy(MRRenameSeriesProcessingStrategy):
         ASLSEQSeriesRenameEnum.ASLPRODCBF_COLOR: re.compile(r'.*((?<!r)CBF|SCREENSAVE).*', re.IGNORECASE),
     }
     type_null_series_rename_dict = {
-        ASLSEQSeriesRenameEnum.ASLPRODCBF_COLOR: {ASLSEQSeriesRenameEnum.ASLPRODCBF,
+        ASLSEQSeriesRenameEnum.ASLPRODCBF_COLOR: {ASLSEQSeriesRenameEnum.ASLPRODCBF_COLOR,
                                                   ASLSEQSeriesRenameEnum.ASL,
                                                   ASLSEQSeriesRenameEnum.CBF,
                                                   ASLSEQSeriesRenameEnum.COLOR},
@@ -1335,17 +1328,34 @@ class ASLProcessingStrategy(MRRenameSeriesProcessingStrategy):
         # (0019,109C)	Unknown  Tag &  Data	ASL
         pulse_sequence_name = dicom_ds.get((0x19, 0x109c))
         if pulse_sequence_name:
+            # SIGNA Voyager (0019,109C)	Unknown  Tag &  Data	ASL
             if str(pulse_sequence_name.value).lower() == ASLSEQSeriesRenameEnum.ASL.value.lower():
                 return ASLSEQSeriesRenameEnum.ASL
+        else:
+            # MR360 (0008,103E)	Series Description	SCREENSAVE
+            # (0043,10A4)	Unknown  Tag &  Data	3D pulsed continuous ASL technique
+            ASL_technique = dicom_ds.get((0x43, 0x10A4))
+            if ASL_technique:
+                if ASLSEQSeriesRenameEnum.ASL.value.lower() in str(ASL_technique.value).lower():
+                    return ASLSEQSeriesRenameEnum.ASL
         return NullEnum.NULL
 
     @classmethod
     def get_cbf(cls, dicom_ds: FileDataset, ):
-        # (0019,109C)	Unknown  Tag &  Data	ASL
         functional_processing_name = dicom_ds.get((0x51, 0x1002))
         if functional_processing_name:
             if str(functional_processing_name.value).lower() == ASLSEQSeriesRenameEnum.CBF.value.lower():
                 return ASLSEQSeriesRenameEnum.CBF
+            elif str(functional_processing_name.value).lower() == ASLSEQSeriesRenameEnum.Cerebral_Blood_Flow.value.lower():
+                return ASLSEQSeriesRenameEnum.CBF
+        else:
+            # (0008,1090)	Manufacturer Model Name	MR360
+            manufacturer_model_name = dicom_ds.get((0x08, 0x1090))
+            image_type_tag = dicom_ds.get((0x08, 0x08))
+            # (0008,0008)	Image Type	DERIVED\SECONDARY\SCREEN SAVE
+            # ASLSEQSeriesRenameEnum.ASLPRODCBF_COLOR get CBF
+            if 'MR360' in manufacturer_model_name.value and image_type_tag[-1] == 'SCREEN SAVE':
+                    return ASLSEQSeriesRenameEnum.CBF
         return NullEnum.NULL
 
     @classmethod
@@ -1374,7 +1384,6 @@ class ASLProcessingStrategy(MRRenameSeriesProcessingStrategy):
             if match_result:
                 series_group_set = set()
                 series_group_set.add(series_rename_enum)
-
                 for series_group_fn in self.get_series_group_fn_list():
                     item_enum = series_group_fn(dicom_ds=dicom_ds)
                     if item_enum is not NullEnum.NULL:

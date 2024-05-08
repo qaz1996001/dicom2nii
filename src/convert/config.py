@@ -236,6 +236,7 @@ class ASLSEQSeriesRenameEnum(BaseEnum):
     ASL = 'ASL'
     CBF = 'CBF'
     COLOR = 'COLOR'
+    Cerebral_Blood_Flow = 'Cerebral Blood Flow'
 
 
 
