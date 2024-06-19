@@ -6,7 +6,7 @@ from abc import ABCMeta, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Union
 from tqdm.auto import tqdm
-from pydicom import dcmread, FileDataset, Dataset
+from pydicom import dcmread, FileDataset, Dataset,DataElement
 import orjson
 from .config import MRSeriesRenameEnum,DSCSeriesRenameEnum,ASLSEQSeriesRenameEnum
 
@@ -204,28 +204,32 @@ class MRDicomProcessingStrategy(ProcessingStrategy):
         series_time = dicom_ds.get((0x08, 0x31))
         acquisition_time = dicom_ds.get((0x08, 0x32))
         content_time = dicom_ds.get((0x08, 0x33))
-        flag = False
+        flag_list = []
         if study_time:
             study_time_str = study_time.value.split('.')[0]
             flag, study_time_str = self.validate_time(study_time_str)
             if flag:
-                dicom_ds[(0x08, 0x30)].value = self.validate_time(study_time_str)
+                dicom_ds[(0x08, 0x30)].value = study_time_str
+                flag_list.append(flag)
         if series_time:
             series_time_str = series_time.value.split('.')[0]
             flag, series_time_str = self.validate_time(series_time_str)
             if flag:
-                dicom_ds[(0x08, 0x31)].value = self.validate_time(series_time_str)
+                dicom_ds[(0x08, 0x31)].value = series_time_str
+                flag_list.append(flag)
         if acquisition_time:
             acquisition_time_str = acquisition_time.value.split('.')[0]
             flag, acquisition_time_str = self.validate_time(acquisition_time_str)
             if flag:
-                dicom_ds[(0x08, 0x32)].value = self.validate_time(acquisition_time_str)
+                dicom_ds[(0x08, 0x32)].value = acquisition_time_str
+                flag_list.append(flag)
         if content_time:
             content_time_str = content_time.value.split('.')[0]
             flag, content_time_str = self.validate_time(content_time_str)
             if flag:
-                dicom_ds[(0x08, 0x33)].value = self.validate_time(content_time_str)
-        return flag,dicom_ds
+                dicom_ds[(0x08, 0x33)].value = content_time_str
+                flag_list.append(flag)
+        return any(flag_list),dicom_ds
 
     # def revise_date(self, dicom_ds: FileDataset):
     #     # (0008,0020)	Study Date 20220920
@@ -324,16 +328,4 @@ class PostProcessManager:
     @input_path.setter
     def input_path(self, value: str):
         self._input_path = pathlib.Path(value)
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input', dest='input', type=str, required=True,
-                        help="input rename dicom folder.\r\n")
-
-    args = parser.parse_args()
-    nifti_path = pathlib.Path(args.input)
-
-    post_process_manager = PostProcessManager(input_path=nifti_path)
-    post_process_manager.run(executor=None)
 
