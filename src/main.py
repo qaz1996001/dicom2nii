@@ -98,7 +98,7 @@ if __name__ == '__main__':
     file_path = pathlib.Path(__file__).absolute().parent
     sys.path.append(str(file_path))
     if input_dicom_path and output_dicom_path:
-        dicom_work = min(2, max(1, args.work))
+        dicom_work = min(4, max(1, args.work))
         dicom_rename_executor = ProcessPoolExecutor(max_workers=dicom_work)
         run_dicom_rename_mr(executor=dicom_rename_executor,
                             input_path=input_dicom_path,

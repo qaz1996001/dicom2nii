@@ -20,7 +20,7 @@ class CTSeriesRenameEnum(BaseEnum):
     CTA = 'CTA'
 
 
-class MRSeriesRenameEnum(BaseEnum):
+class MRSeriesRenameEnum(str,BaseEnum):
     CVR = 'CVR'
     CVR1000 = 'CVR1000'
     CVR2000 = 'CVR2000'
@@ -74,7 +74,7 @@ class SeriesEnum(BaseEnum):
     SWANPHASE = 1
 
 
-class T1SeriesRenameEnum(BaseEnum):
+class T1SeriesRenameEnum(str, BaseEnum):
     T1 = 'T1'
     ## 2D ##
     T1_AXI = 'T1_AXI'
@@ -154,10 +154,8 @@ class T1SeriesRenameEnum(BaseEnum):
     T1BRAVO_CORr = 'T1BRAVO_CORr'
     T1BRAVOCE_CORr = 'T1BRAVOCE_CORr'
 
-    ## 3D REFORMATTED ##
 
-
-class T2SeriesRenameEnum(BaseEnum):
+class T2SeriesRenameEnum(str,BaseEnum):
     ## 2D ##
     T2 = 'T2'
     T2_AXI = 'T2_AXI'

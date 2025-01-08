@@ -59,8 +59,10 @@ def list_dicom_study(data_path: pathlib.Path) -> pd.DataFrame:
 def list_dicom_series(data_path: pathlib.Path) -> pd.DataFrame:
     series_meta_list = []
     for study_path in data_path.iterdir():
-        meta_folder_path = filter(lambda x: x.name == '.meta' ,study_path.iterdir())
-        for meta_path in next(meta_folder_path).iterdir():
+        meta_folder_path_list = list(filter(lambda x: x.name == '.meta' ,study_path.iterdir()))
+        if len(meta_folder_path_list) == 0:
+            continue
+        for meta_path in meta_folder_path_list[0].iterdir():
             print(meta_path)
             with open(f'{meta_path}', encoding='utf8') as file:
                 orjson_dict = orjson.loads(file.read())
