@@ -1,0 +1,25 @@
+/.idea/
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+/.venv/
+/javascript/node_modules/
+/back/
+cache/
+output/
+*.h5
+*.cache            # Metro cache folder
+*.tmp              # temp files created during bundling
+*.log              # build or Metro logs
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+.doit.db
+*.py[cod]
+/.env
