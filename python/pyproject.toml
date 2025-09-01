@@ -1,0 +1,177 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[project]
+name = "dicom2nii"
+version = "2.0.0"
+description = "DICOM 到 NIfTI 轉換工具 - 重構版本"
+readme = "03_REFACTOR_MIGRATION_GUIDE.md"
+license = {text = "MIT"}
+authors = [
+    {name = "sean", email = "team@dicom2nii.org"}
+]
+keywords = ["dicom", "nifti", "medical-imaging", "neuroimaging", "mri", "ct"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Healthcare Industry",
+    "Intended Audience :: Science/Research", 
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.9"
+dependencies = [
+    # 核心 DICOM/NIfTI 處理
+    "pydicom>=2.3.0",
+    "nibabel>=4.0.0",
+    "dcm2niix==1.0.20220715",
+    # 數值計算和資料處理
+    "numpy>=1.21.0",
+    "pandas>=1.5.0",
+    "openpyxl>=3.1.0", # Excel 檔案支援
+    # HTTP 和雲端儲存
+    "requests>=2.28.0",
+    "boto3>=1.26.0",
+    "botocore>=1.29.0",
+    # 高效能 JSON 和進度條
+    "orjson>=3.8.0",
+    "tqdm>=4.64.0",
+    # 結構化日誌 (遵循 .cursor 規則)
+    "structlog>=22.0.0",
+]
+
+[project.optional-dependencies]
+# 開發依賴 (遵循 .cursor 規則)
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0", 
+    "pytest-cov>=4.0.0",
+    "black>=22.0.0",
+    "ruff>=0.1.0",  # 替代 flake8，更快
+    "mypy>=1.0.0",
+    "types-requests>=2.28.0",
+]
+
+# FastAPI 相關 (如果需要 Web API)
+web = [
+    "fastapi>=0.95.0",
+    "uvicorn>=0.20.0",
+]
+
+# 資料庫支援 (遵循非同步原則)
+database = [
+    "asyncpg>=0.28.0",
+    "aiomysql>=0.2.0", 
+    "sqlalchemy>=2.0.0",
+]
+
+# 快取支援
+cache = [
+    "redis>=4.5.0",
+]
+
+# 文件生成
+docs = [
+    "sphinx>=5.0.0",
+    "sphinx-rtd-theme>=1.2.0",
+]
+
+[project.scripts]
+dicom2nii = "src.cli.main:main"
+dicom2nii-legacy = "src.new_main:main"
+
+[project.urls]
+Homepage = "https://github.com/dicom2nii/dicom2nii"
+Repository = "https://github.com/dicom2nii/dicom2nii.git"
+Documentation = "https://dicom2nii.readthedocs.io/"
+"Bug Tracker" = "https://github.com/dicom2nii/dicom2nii/issues"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0", 
+    "black>=22.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "types-requests>=2.28.0",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.mypy]
+python_version = "3.9"
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "dcm2niix.*",
+    "nibabel.*", 
+    "pydicom.*",
+    "orjson.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config", 
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
