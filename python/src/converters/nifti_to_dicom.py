@@ -21,7 +21,9 @@ from .base import BaseConverter
 class NiftiToDicomConverter(BaseConverter):
     """NIfTI 到 DICOM 轉換器"""
 
-    study_folder_name_pattern = re.compile(r'^(\d{8})_(\d{8})_(MR|CT)_(.*)$', re.IGNORECASE)
+    study_folder_name_pattern = re.compile(
+        r"^(\d{8})_(\d{8})_(MR|CT)_(.*)$", re.IGNORECASE
+    )
 
     def __init__(self, input_path: str, output_path: str):
         """初始化轉換器
@@ -68,7 +70,9 @@ class NiftiToDicomConverter(BaseConverter):
         """轉換單一檢查"""
         try:
             # 尋找所有 NIfTI 檔案
-            nifti_files = [f for f in study_path.iterdir() if f.name.endswith('.nii.gz')]
+            nifti_files = [
+                f for f in study_path.iterdir() if f.name.endswith(".nii.gz")
+            ]
 
             for nifti_file in nifti_files:
                 # 檢查是否應該排除
@@ -90,20 +94,22 @@ class NiftiToDicomConverter(BaseConverter):
 
     def _find_meta_file(self, nifti_file: Path) -> Optional[Path]:
         """尋找對應的元資料檔案"""
-        meta_folder = nifti_file.parent / '.meta'
+        meta_folder = nifti_file.parent / ".meta"
         if not meta_folder.exists():
             return None
 
-        meta_file_name = nifti_file.name.replace('.nii.gz', '.jsonlines')
+        meta_file_name = nifti_file.name.replace(".nii.gz", ".jsonlines")
         meta_file = meta_folder / meta_file_name
 
         return meta_file if meta_file.exists() else None
 
-    def _convert_nifti_to_dicom(self, nifti_file: Path, meta_file: Path, output_folder: Path) -> None:
+    def _convert_nifti_to_dicom(
+        self, nifti_file: Path, meta_file: Path, output_folder: Path
+    ) -> None:
         """轉換單一 NIfTI 檔案到 DICOM"""
         try:
             # 跳過冠狀面和矢狀面
-            if 'COR' in nifti_file.name or 'SAG' in nifti_file.name:
+            if "COR" in nifti_file.name or "SAG" in nifti_file.name:
                 return
 
             # 載入 NIfTI 檔案
@@ -125,29 +131,37 @@ class NiftiToDicomConverter(BaseConverter):
         except Exception as e:
             raise ConversionError(f"轉換 NIfTI 到 DICOM 失敗 {nifti_file}: {str(e)}")
 
-    def _handle_image_orientation(self, nifti_obj: nib.Nifti1Image, nifti_array: np.ndarray) -> np.ndarray:
+    def _handle_image_orientation(
+        self, nifti_obj: nib.Nifti1Image, nifti_array: np.ndarray
+    ) -> np.ndarray:
         """處理影像方向"""
         try:
             nifti_obj_axcodes = tuple(nib.aff2axcodes(nifti_obj.affine))
-            pixdim = nifti_obj.header.get('pixdim')
+            pixdim = nifti_obj.header.get("pixdim")
 
             if pixdim[0] == -1:
-                nifti_array = self._do_reorientation(nifti_array, nifti_obj_axcodes, ('S', 'P', 'L'))
-            elif pixdim[0] == 1 and nifti_obj_axcodes == ('R', 'A', 'S'):
-                nifti_array = self._do_reorientation(nifti_array, nifti_obj_axcodes, ('S', 'P', 'L'))
+                nifti_array = self._do_reorientation(
+                    nifti_array, nifti_obj_axcodes, ("S", "P", "L")
+                )
+            elif pixdim[0] == 1 and nifti_obj_axcodes == ("R", "A", "S"):
+                nifti_array = self._do_reorientation(
+                    nifti_array, nifti_obj_axcodes, ("S", "P", "L")
+                )
 
             return nifti_array
 
         except Exception as e:
             raise ConversionError(f"影像方向處理失敗: {str(e)}")
 
-    def _load_dicom_headers(self, meta_file: Path, expected_slices: int) -> list[Dataset]:
+    def _load_dicom_headers(
+        self, meta_file: Path, expected_slices: int
+    ) -> list[Dataset]:
         """載入 DICOM 標頭資訊"""
         try:
-            with open(meta_file, encoding='utf8') as file:
+            with open(meta_file, encoding="utf8") as file:
                 orjson_dict = orjson.loads(file.read())
 
-            exclude_tags = {'0018A001', '00081070', '00081110'}
+            exclude_tags = {"0018A001", "00081070", "00081110"}
             dicom_headers = []
 
             for _key, value in orjson_dict.items():
@@ -192,7 +206,9 @@ class NiftiToDicomConverter(BaseConverter):
         except Exception:
             return headers  # 如果排序失敗，返回原始順序
 
-    def _generate_dicom_files(self, headers: list[Dataset], nifti_array: np.ndarray, output_folder: Path) -> None:
+    def _generate_dicom_files(
+        self, headers: list[Dataset], nifti_array: np.ndarray, output_folder: Path
+    ) -> None:
         """生成 DICOM 檔案"""
         try:
             for i, header in enumerate(headers):
@@ -221,9 +237,13 @@ class NiftiToDicomConverter(BaseConverter):
         return ornt_transf, ornt_init, ornt_fin
 
     @classmethod
-    def _do_reorientation(cls, data_array: np.ndarray, init_axcodes: tuple, final_axcodes: tuple) -> np.ndarray:
+    def _do_reorientation(
+        cls, data_array: np.ndarray, init_axcodes: tuple, final_axcodes: tuple
+    ) -> np.ndarray:
         """執行影像重新定向"""
-        ornt_transf, ornt_init, ornt_fin = cls._compute_orientation(init_axcodes, final_axcodes)
+        ornt_transf, ornt_init, ornt_fin = cls._compute_orientation(
+            init_axcodes, final_axcodes
+        )
 
         if np.array_equal(ornt_init, ornt_fin):
             return data_array

@@ -7,7 +7,7 @@ from .dicom_to_nifti import DicomToNiftiConverter
 from .nifti_to_dicom import NiftiToDicomConverter
 
 __all__ = [
-    'BaseConverter',
-    'DicomToNiftiConverter',
-    'NiftiToDicomConverter',
+    "BaseConverter",
+    "DicomToNiftiConverter",
+    "NiftiToDicomConverter",
 ]

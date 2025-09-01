@@ -70,11 +70,12 @@ class BaseConverter(metaclass=ABCMeta):
     def _copy_metadata(self, source_study_path: Path) -> None:
         """複製元資料目錄"""
         try:
-            meta_path = source_study_path / '.meta'
+            meta_path = source_study_path / ".meta"
             if meta_path.exists():
                 from ..utils.file_operations import copy_directory_tree
+
                 output_study_path = self._get_output_study_path(source_study_path)
-                output_meta_path = output_study_path / '.meta'
+                output_meta_path = output_study_path / ".meta"
                 copy_directory_tree(meta_path, output_meta_path, dirs_exist_ok=True)
         except Exception as e:
             raise ConversionError(f"複製元資料失敗: {str(e)}")
