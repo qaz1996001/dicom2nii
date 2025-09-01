@@ -17,8 +17,8 @@ from ..base import NiftiProcessingStrategy
 class DwiNiftiProcessingStrategy(NiftiProcessingStrategy):
     """DWI NIfTI 處理策略"""
 
-    pattern = re.compile(r'(DWI.*)(\.nii\.gz)$')
-    suffix_pattern = re.compile(r'(DWI.*)(?<![a-z])([a-z]{0,2}?)(\.nii\.gz)$')
+    pattern = re.compile(r"(DWI.*)(\.nii\.gz)$")
+    suffix_pattern = re.compile(r"(DWI.*)(?<![a-z])([a-z]{0,2}?)(\.nii\.gz)$")
     file_size_limit = Config.MEDIUM_FILE_SIZE_LIMIT  # 550KB
 
     def process(self, study_path: Path, *args, **kwargs) -> None:
@@ -43,10 +43,14 @@ class DwiNiftiProcessingStrategy(NiftiProcessingStrategy):
 
             if len(dwi_files) == 1:
                 # 單一檔案，移除後綴
-                new_file_path = self.rename_file_without_suffix(series_path, self.suffix_pattern)
+                new_file_path = self.rename_file_without_suffix(
+                    series_path, self.suffix_pattern
+                )
             else:
                 # 多個檔案，添加數字後綴
-                new_file_path = self.rename_file_with_suffix(series_path, self.suffix_pattern)
+                new_file_path = self.rename_file_with_suffix(
+                    series_path, self.suffix_pattern
+                )
 
             if new_file_path:
                 self.rename_related_files(series_path, new_file_path)
@@ -56,9 +60,9 @@ class DwiNiftiProcessingStrategy(NiftiProcessingStrategy):
 class ADCNiftiProcessingStrategy(NiftiProcessingStrategy):
     """ADC NIfTI 處理策略"""
 
-    pattern = re.compile(r'(?<!e)(ADC[a-z]{0,2}?)(\.nii\.gz)$', re.IGNORECASE)
-    suffix_pattern = re.compile(r'(?<!e)(ADC)([a-z]{0,2}?)(\.nii\.gz)$', re.IGNORECASE)
-    dwi_pattern = re.compile(r'(DWI0)(.*\.nii\.gz)$', re.IGNORECASE)
+    pattern = re.compile(r"(?<!e)(ADC[a-z]{0,2}?)(\.nii\.gz)$", re.IGNORECASE)
+    suffix_pattern = re.compile(r"(?<!e)(ADC)([a-z]{0,2}?)(\.nii\.gz)$", re.IGNORECASE)
+    dwi_pattern = re.compile(r"(DWI0)(.*\.nii\.gz)$", re.IGNORECASE)
     file_size_limit = Config.SMALL_FILE_SIZE_LIMIT  # 100KB
 
     def process(self, study_path: Path, *args, **kwargs) -> None:
@@ -94,7 +98,7 @@ class ADCNiftiProcessingStrategy(NiftiProcessingStrategy):
                     if dwi_nii.get_fdata().shape == adc_nii.get_fdata().shape:
                         # 更新標頭
                         new_header = adc_nii.header.copy()
-                        new_header['pixdim'] = dwi_nii.header['pixdim']
+                        new_header["pixdim"] = dwi_nii.header["pixdim"]
                         new_affine = dwi_nii.affine
                         data = adc_nii.get_fdata()
 
@@ -121,7 +125,9 @@ class ADCNiftiProcessingStrategy(NiftiProcessingStrategy):
 
             if len(adc_files) == 1:
                 # 單一 ADC 檔案
-                new_file_path = self.rename_file_without_suffix(adc_path, self.suffix_pattern)
+                new_file_path = self.rename_file_without_suffix(
+                    adc_path, self.suffix_pattern
+                )
                 if new_file_path:
                     self.rename_related_files(adc_path, new_file_path)
                     adc_path.rename(new_file_path)
@@ -129,7 +135,9 @@ class ADCNiftiProcessingStrategy(NiftiProcessingStrategy):
                 # 多個 ADC 檔案，需要與 DWI 檔案配對
                 self._pair_adc_with_dwi(adc_path, dwi_files, study_path)
 
-    def _pair_adc_with_dwi(self, adc_path: Path, dwi_files: list[Path], study_path: Path) -> None:
+    def _pair_adc_with_dwi(
+        self, adc_path: Path, dwi_files: list[Path], study_path: Path
+    ) -> None:
         """將 ADC 檔案與對應的 DWI 檔案配對"""
         adc_nii = nib.load(str(adc_path))
         data = adc_nii.get_fdata().round(0).astype(np.int32)
@@ -143,7 +151,7 @@ class ADCNiftiProcessingStrategy(NiftiProcessingStrategy):
                 adc_path.unlink()
 
                 # 建立新的 ADC 檔案名稱
-                new_adc_name = dwi_file.name.replace('DWI0', 'ADC')
+                new_adc_name = dwi_file.name.replace("DWI0", "ADC")
                 new_adc_path = adc_path.parent / new_adc_name
 
                 # 儲存新的 ADC 檔案
@@ -156,7 +164,7 @@ class ADCNiftiProcessingStrategy(NiftiProcessingStrategy):
 
     def _handle_related_files(self, old_path: Path, new_path: Path) -> None:
         """處理相關的 bval 和 bvec 檔案"""
-        for suffix in ['.bval', '.bvec']:
+        for suffix in [".bval", ".bvec"]:
             old_related = old_path.parent / (old_path.stem + suffix)
             if old_related.exists():
                 new_related = new_path.parent / (new_path.stem + suffix)
@@ -166,8 +174,8 @@ class ADCNiftiProcessingStrategy(NiftiProcessingStrategy):
 class SWANNiftiProcessingStrategy(NiftiProcessingStrategy):
     """SWAN NIfTI 處理策略"""
 
-    pattern = re.compile(r'(?<!e)(SWAN[a-z]{0,2}?)(\.nii\.gz)$', re.IGNORECASE)
-    suffix_pattern = re.compile(r'(?<!e)(SWAN)([a-z]{0,2}?)(\.nii\.gz)$', re.IGNORECASE)
+    pattern = re.compile(r"(?<!e)(SWAN[a-z]{0,2}?)(\.nii\.gz)$", re.IGNORECASE)
+    suffix_pattern = re.compile(r"(?<!e)(SWAN)([a-z]{0,2}?)(\.nii\.gz)$", re.IGNORECASE)
     file_size_limit = Config.LARGE_FILE_SIZE_LIMIT  # 800KB
 
     def process(self, study_path: Path, *args, **kwargs) -> None:
@@ -191,9 +199,13 @@ class SWANNiftiProcessingStrategy(NiftiProcessingStrategy):
                 continue
 
             if len(swan_files) == 1:
-                new_file_path = self.rename_file_without_suffix(series_path, self.suffix_pattern)
+                new_file_path = self.rename_file_without_suffix(
+                    series_path, self.suffix_pattern
+                )
             else:
-                new_file_path = self.rename_file_with_suffix(series_path, self.suffix_pattern)
+                new_file_path = self.rename_file_with_suffix(
+                    series_path, self.suffix_pattern
+                )
 
             if new_file_path:
                 self.rename_related_files(series_path, new_file_path)
@@ -203,8 +215,8 @@ class SWANNiftiProcessingStrategy(NiftiProcessingStrategy):
 class T1NiftiProcessingStrategy(NiftiProcessingStrategy):
     """T1 NIfTI 處理策略"""
 
-    pattern = re.compile(r'(T1.*)(\.nii\.gz)$')
-    suffix_pattern = re.compile(r'(T1.*)(AXIr?|CORr?|SAGr?)([a-z]{0,1})(\.nii\.gz)$')
+    pattern = re.compile(r"(T1.*)(\.nii\.gz)$")
+    suffix_pattern = re.compile(r"(T1.*)(AXIr?|CORr?|SAGr?)([a-z]{0,1})(\.nii\.gz)$")
     file_size_limit = Config.LARGE_FILE_SIZE_LIMIT  # 800KB
 
     def process(self, study_path: Path, *args, **kwargs) -> None:
@@ -244,7 +256,7 @@ class T1NiftiProcessingStrategy(NiftiProcessingStrategy):
             if len(groups) > 2 and len(groups[2]) > 0:
                 suffix_char = groups[2]
                 suffix_int = ord(suffix_char) - Config.CHAR_OFFSET
-                new_file_name = f'{groups[0]}{groups[1]}_{suffix_int}.nii.gz'
+                new_file_name = f"{groups[0]}{groups[1]}_{suffix_int}.nii.gz"
                 return series_path.parent / new_file_name
         return None
 
@@ -253,7 +265,7 @@ class T1NiftiProcessingStrategy(NiftiProcessingStrategy):
         pattern_result = self.suffix_pattern.match(series_path.name)
         if pattern_result:
             groups = pattern_result.groups()
-            new_file_name = f'{groups[0]}{groups[1]}.nii.gz'
+            new_file_name = f"{groups[0]}{groups[1]}.nii.gz"
             return series_path.parent / new_file_name
         return None
 
@@ -261,8 +273,8 @@ class T1NiftiProcessingStrategy(NiftiProcessingStrategy):
 class T2NiftiProcessingStrategy(NiftiProcessingStrategy):
     """T2 NIfTI 處理策略"""
 
-    pattern = re.compile(r'(T2.*)(\.nii\.gz)$')
-    suffix_pattern = re.compile(r'(T2.*)(AXIr?|CORr?|SAGr?)([a-z]{0,1})(\.nii\.gz)$')
+    pattern = re.compile(r"(T2.*)(\.nii\.gz)$")
+    suffix_pattern = re.compile(r"(T2.*)(AXIr?|CORr?|SAGr?)([a-z]{0,1})(\.nii\.gz)$")
     file_size_limit = Config.LARGE_FILE_SIZE_LIMIT  # 800KB
 
     def process(self, study_path: Path, *args, **kwargs) -> None:
@@ -302,7 +314,7 @@ class T2NiftiProcessingStrategy(NiftiProcessingStrategy):
             if len(groups) > 2 and len(groups[2]) > 0:
                 suffix_char = groups[2]
                 suffix_int = ord(suffix_char) - Config.CHAR_OFFSET
-                new_file_name = f'{groups[0]}{groups[1]}_{suffix_int}.nii.gz'
+                new_file_name = f"{groups[0]}{groups[1]}_{suffix_int}.nii.gz"
                 return series_path.parent / new_file_name
         return None
 
@@ -311,6 +323,6 @@ class T2NiftiProcessingStrategy(NiftiProcessingStrategy):
         pattern_result = self.suffix_pattern.match(series_path.name)
         if pattern_result:
             groups = pattern_result.groups()
-            new_file_name = f'{groups[0]}{groups[1]}.nii.gz'
+            new_file_name = f"{groups[0]}{groups[1]}.nii.gz"
             return series_path.parent / new_file_name
         return None

@@ -14,12 +14,12 @@ from .base import (
 )
 
 __all__ = [
-    'BaseProcessingStrategy',
-    'DicomProcessingStrategy',
-    'NiftiProcessingStrategy',
-    'SeriesProcessingStrategy',
-    'ModalityProcessingStrategy',
-    'ImageOrientationProcessingStrategy',
-    'ContrastProcessingStrategy',
-    'MRAcquisitionTypeProcessingStrategy',
+    "BaseProcessingStrategy",
+    "DicomProcessingStrategy",
+    "NiftiProcessingStrategy",
+    "SeriesProcessingStrategy",
+    "ModalityProcessingStrategy",
+    "ImageOrientationProcessingStrategy",
+    "ContrastProcessingStrategy",
+    "MRAcquisitionTypeProcessingStrategy",
 ]

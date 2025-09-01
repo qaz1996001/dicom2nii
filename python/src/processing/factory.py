@@ -2,7 +2,6 @@
 處理策略工廠模式實作
 """
 
-
 from ..core.enums import ModalityEnum
 from ..core.exceptions import ProcessingError
 from .base import BaseProcessingStrategy, MRRenameSeriesProcessingStrategy
@@ -33,29 +32,31 @@ class ProcessingStrategyFactory:
 
     # MR 處理策略註冊表 - 完整的 16 個策略
     _mr_strategy_registry: dict[str, type[MRRenameSeriesProcessingStrategy]] = {
-        'DWI': DwiProcessingStrategy,
-        'ADC': ADCProcessingStrategy,
-        'eADC': EADCProcessingStrategy,
-        'SWAN': SWANProcessingStrategy,
-        'eSWAN': ESWANProcessingStrategy,
-        'MRA_BRAIN': MRABrainProcessingStrategy,
-        'MRA_NECK': MRANeckProcessingStrategy,
-        'MRAVR_BRAIN': MRAVRBrainProcessingStrategy,
-        'MRAVR_NECK': MRAVRNeckProcessingStrategy,
-        'T1': T1ProcessingStrategy,
-        'T2': T2ProcessingStrategy,
-        'ASL': ASLProcessingStrategy,
-        'DSC': DSCProcessingStrategy,
-        'CVR': CVRProcessingStrategy,
-        'RESTING': RestingProcessingStrategy,
-        'DTI': DTIProcessingStrategy,
+        "DWI": DwiProcessingStrategy,
+        "ADC": ADCProcessingStrategy,
+        "eADC": EADCProcessingStrategy,
+        "SWAN": SWANProcessingStrategy,
+        "eSWAN": ESWANProcessingStrategy,
+        "MRA_BRAIN": MRABrainProcessingStrategy,
+        "MRA_NECK": MRANeckProcessingStrategy,
+        "MRAVR_BRAIN": MRAVRBrainProcessingStrategy,
+        "MRAVR_NECK": MRAVRNeckProcessingStrategy,
+        "T1": T1ProcessingStrategy,
+        "T2": T2ProcessingStrategy,
+        "ASL": ASLProcessingStrategy,
+        "DSC": DSCProcessingStrategy,
+        "CVR": CVRProcessingStrategy,
+        "RESTING": RestingProcessingStrategy,
+        "DTI": DTIProcessingStrategy,
     }
 
     # 策略實例快取
     _strategy_cache: dict[str, BaseProcessingStrategy] = {}
 
     @classmethod
-    def register_strategy(cls, name: str, strategy_class: type[BaseProcessingStrategy]) -> None:
+    def register_strategy(
+        cls, name: str, strategy_class: type[BaseProcessingStrategy]
+    ) -> None:
         """註冊新的處理策略
 
         Args:
@@ -63,7 +64,9 @@ class ProcessingStrategyFactory:
             strategy_class: 策略類別
         """
         if not issubclass(strategy_class, BaseProcessingStrategy):
-            raise ProcessingError(f"策略類別必須繼承自 BaseProcessingStrategy: {strategy_class}")
+            raise ProcessingError(
+                f"策略類別必須繼承自 BaseProcessingStrategy: {strategy_class}"
+            )
 
         cls._mr_strategy_registry[name] = strategy_class
 
@@ -116,7 +119,9 @@ class ProcessingStrategyFactory:
         return strategies
 
     @classmethod
-    def get_strategies_for_modality(cls, modality: ModalityEnum) -> list[BaseProcessingStrategy]:
+    def get_strategies_for_modality(
+        cls, modality: ModalityEnum
+    ) -> list[BaseProcessingStrategy]:
         """根據模態獲取相應的處理策略
 
         Args:
@@ -162,11 +167,11 @@ class NiftiProcessingStrategyFactory:
     )
 
     _strategy_registry: dict[str, type] = {
-        'DWI': DwiNiftiProcessingStrategy,
-        'ADC': ADCNiftiProcessingStrategy,
-        'SWAN': SWANNiftiProcessingStrategy,
-        'T1': T1NiftiProcessingStrategy,
-        'T2': T2NiftiProcessingStrategy,
+        "DWI": DwiNiftiProcessingStrategy,
+        "ADC": ADCNiftiProcessingStrategy,
+        "SWAN": SWANNiftiProcessingStrategy,
+        "T1": T1NiftiProcessingStrategy,
+        "T2": T2NiftiProcessingStrategy,
     }
 
     _strategy_cache: dict[str, BaseProcessingStrategy] = {}

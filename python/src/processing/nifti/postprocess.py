@@ -5,13 +5,13 @@ NIfTI 後處理管理
 from pathlib import Path
 from typing import Union
 
-from ...core.exceptions import ProcessingError
-from ...core.types import ExecutorType
-from ..base import NiftiProcessingStrategy
-from .strategies import (
+from src.core.exceptions import ProcessingError
+from src.core.types import ExecutorType
+from src.processing.base import NiftiProcessingStrategy
+from src.processing.nifti.special import SWANNiftiProcessingStrategy
+from src.processing.nifti.structure import (
     ADCNiftiProcessingStrategy,
     DwiNiftiProcessingStrategy,
-    SWANNiftiProcessingStrategy,
     T1NiftiProcessingStrategy,
     T2NiftiProcessingStrategy,
 )
@@ -28,11 +28,13 @@ class NiftiPostProcessManager:
         """
         self._input_path = Path(input_path)
         self._processing_strategies: list[NiftiProcessingStrategy] = [
+            # Structure
             DwiNiftiProcessingStrategy(),
             ADCNiftiProcessingStrategy(),
-            SWANNiftiProcessingStrategy(),
             T1NiftiProcessingStrategy(),
-            T2NiftiProcessingStrategy()
+            T2NiftiProcessingStrategy(),
+            # Special
+            SWANNiftiProcessingStrategy(),
         ]
 
     @property
@@ -60,7 +62,7 @@ class NiftiPostProcessManager:
 
     def _delete_json_files(self, study_path: Path) -> None:
         """刪除 JSON 檔案"""
-        json_files = [f for f in study_path.iterdir() if f.name.endswith('.json')]
+        json_files = [f for f in study_path.iterdir() if f.name.endswith(".json")]
         for json_file in json_files:
             json_file.unlink()
 
@@ -94,6 +96,5 @@ class NiftiPostProcessManager:
     def remove_processing_strategy(self, strategy_type: type) -> None:
         """移除指定類型的處理策略"""
         self._processing_strategies = [
-            s for s in self._processing_strategies
-            if not isinstance(s, strategy_type)
+            s for s in self._processing_strategies if not isinstance(s, strategy_type)
         ]

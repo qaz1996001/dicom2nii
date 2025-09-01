@@ -23,10 +23,14 @@ class MRABrainProcessingStrategy(MRRenameSeriesProcessingStrategy):
     """MRA Brain 處理策略 - 遵循 .cursor 規則"""
 
     series_rename_mapping = {
-        MRSeriesRenameEnum.MRA_BRAIN: re.compile('.+(TOF)(((?!Neck).)*)$', re.IGNORECASE),
+        MRSeriesRenameEnum.MRA_BRAIN: re.compile(
+            ".+(TOF)(((?!Neck).)*)$", re.IGNORECASE
+        ),
     }
 
-    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum], ...] = (MRAcquisitionTypeEnum.TYPE_3D,)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum], ...] = (
+        MRAcquisitionTypeEnum.TYPE_3D,
+    )
 
     def process(self, dicom_ds: DicomDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         """處理 MRA Brain 序列"""
@@ -36,7 +40,9 @@ class MRABrainProcessingStrategy(MRRenameSeriesProcessingStrategy):
             if modality_enum != self.modality:
                 return NullEnum.NULL
 
-            mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+            mr_acquisition_type_enum = (
+                self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+            )
             if mr_acquisition_type_enum not in self.mr_acquisition_type:
                 return NullEnum.NULL
 
@@ -51,23 +57,31 @@ class MRABrainProcessingStrategy(MRRenameSeriesProcessingStrategy):
             if match_result:
                 # 檢查影像類型是否為 ORIGINAL
                 image_type = dicom_ds.get((0x08, 0x08))
-                if image_type and len(image_type.value) > 0 and image_type.value[0] == 'ORIGINAL':
+                if (
+                    image_type
+                    and len(image_type.value) > 0
+                    and image_type.value[0] == "ORIGINAL"
+                ):
                     return MRSeriesRenameEnum.MRA_BRAIN
 
             return NullEnum.NULL
 
         except Exception as e:
-            raise ProcessingError(f"MRA Brain 處理失敗: {str(e)}", processing_stage="mra_brain_processing")
+            raise ProcessingError(
+                f"MRA Brain 處理失敗: {str(e)}", processing_stage="mra_brain_processing"
+            )
 
 
 class MRANeckProcessingStrategy(MRRenameSeriesProcessingStrategy):
     """MRA Neck 處理策略 - 遵循 .cursor 規則"""
 
     series_rename_mapping = {
-        MRSeriesRenameEnum.MRA_NECK: re.compile('.+(TOF).*(Neck).*$', re.IGNORECASE),
+        MRSeriesRenameEnum.MRA_NECK: re.compile(".+(TOF).*(Neck).*$", re.IGNORECASE),
     }
 
-    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum], ...] = (MRAcquisitionTypeEnum.TYPE_3D,)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum], ...] = (
+        MRAcquisitionTypeEnum.TYPE_3D,
+    )
 
     def process(self, dicom_ds: DicomDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         """處理 MRA Neck 序列"""
@@ -77,7 +91,9 @@ class MRANeckProcessingStrategy(MRRenameSeriesProcessingStrategy):
             if modality_enum != self.modality:
                 return NullEnum.NULL
 
-            mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+            mr_acquisition_type_enum = (
+                self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+            )
             if mr_acquisition_type_enum not in self.mr_acquisition_type:
                 return NullEnum.NULL
 
@@ -92,23 +108,33 @@ class MRANeckProcessingStrategy(MRRenameSeriesProcessingStrategy):
             if match_result:
                 # 檢查影像類型是否為 ORIGINAL
                 image_type = dicom_ds.get((0x08, 0x08))
-                if image_type and len(image_type.value) > 0 and image_type.value[0] == 'ORIGINAL':
+                if (
+                    image_type
+                    and len(image_type.value) > 0
+                    and image_type.value[0] == "ORIGINAL"
+                ):
                     return MRSeriesRenameEnum.MRA_NECK
 
             return NullEnum.NULL
 
         except Exception as e:
-            raise ProcessingError(f"MRA Neck 處理失敗: {str(e)}", processing_stage="mra_neck_processing")
+            raise ProcessingError(
+                f"MRA Neck 處理失敗: {str(e)}", processing_stage="mra_neck_processing"
+            )
 
 
 class MRAVRBrainProcessingStrategy(MRRenameSeriesProcessingStrategy):
     """MRA VR Brain 處理策略 - 遵循 .cursor 規則"""
 
     series_rename_mapping = {
-        MRSeriesRenameEnum.MRAVR_BRAIN: re.compile('((?!TOF|Neck).)*(MRA)((?!Neck).)*$', re.IGNORECASE),
+        MRSeriesRenameEnum.MRAVR_BRAIN: re.compile(
+            "((?!TOF|Neck).)*(MRA)((?!Neck).)*$", re.IGNORECASE
+        ),
     }
 
-    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum], ...] = (MRAcquisitionTypeEnum.TYPE_3D,)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum], ...] = (
+        MRAcquisitionTypeEnum.TYPE_3D,
+    )
 
     def process(self, dicom_ds: DicomDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         """處理 MRA VR Brain 序列"""
@@ -118,7 +144,9 @@ class MRAVRBrainProcessingStrategy(MRRenameSeriesProcessingStrategy):
             if modality_enum != self.modality:
                 return NullEnum.NULL
 
-            mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+            mr_acquisition_type_enum = (
+                self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+            )
             if mr_acquisition_type_enum not in self.mr_acquisition_type:
                 return NullEnum.NULL
 
@@ -136,17 +164,24 @@ class MRAVRBrainProcessingStrategy(MRRenameSeriesProcessingStrategy):
             return NullEnum.NULL
 
         except Exception as e:
-            raise ProcessingError(f"MRA VR Brain 處理失敗: {str(e)}", processing_stage="mravr_brain_processing")
+            raise ProcessingError(
+                f"MRA VR Brain 處理失敗: {str(e)}",
+                processing_stage="mravr_brain_processing",
+            )
 
 
 class MRAVRNeckProcessingStrategy(MRRenameSeriesProcessingStrategy):
     """MRA VR Neck 處理策略 - 遵循 .cursor 規則"""
 
     series_rename_mapping = {
-        MRSeriesRenameEnum.MRAVR_NECK: re.compile('((?!TOF).)*(Neck.*MRA)|(MRA.*Neck).*$', re.IGNORECASE),
+        MRSeriesRenameEnum.MRAVR_NECK: re.compile(
+            "((?!TOF).)*(Neck.*MRA)|(MRA.*Neck).*$", re.IGNORECASE
+        ),
     }
 
-    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum], ...] = (MRAcquisitionTypeEnum.TYPE_3D,)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum], ...] = (
+        MRAcquisitionTypeEnum.TYPE_3D,
+    )
 
     def process(self, dicom_ds: DicomDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         """處理 MRA VR Neck 序列"""
@@ -156,7 +191,9 @@ class MRAVRNeckProcessingStrategy(MRRenameSeriesProcessingStrategy):
             if modality_enum != self.modality:
                 return NullEnum.NULL
 
-            mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+            mr_acquisition_type_enum = (
+                self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+            )
             if mr_acquisition_type_enum not in self.mr_acquisition_type:
                 return NullEnum.NULL
 
@@ -174,29 +211,44 @@ class MRAVRNeckProcessingStrategy(MRRenameSeriesProcessingStrategy):
             return NullEnum.NULL
 
         except Exception as e:
-            raise ProcessingError(f"MRA VR Neck 處理失敗: {str(e)}", processing_stage="mravr_neck_processing")
+            raise ProcessingError(
+                f"MRA VR Neck 處理失敗: {str(e)}",
+                processing_stage="mravr_neck_processing",
+            )
 
 
 class CVRProcessingStrategy(MRRenameSeriesProcessingStrategy):
     """CVR (Cerebrovascular Reactivity) 處理策略 - 遵循 .cursor 規則"""
 
     series_rename_mapping = {
-        MRSeriesRenameEnum.CVR: re.compile('.*(CVR).*$', re.IGNORECASE),
+        MRSeriesRenameEnum.CVR: re.compile(".*(CVR).*$", re.IGNORECASE),
     }
 
     # CVR 序列重新命名字典 - 使用宣告式映射
     type_2d_series_rename_dict = {
-        MRSeriesRenameEnum.CVR2000_EAR: {MRSeriesRenameEnum.CVR, RepetitionTimeEnum.TR2000, BodyPartEnum.EAR},
-        MRSeriesRenameEnum.CVR2000_EYE: {MRSeriesRenameEnum.CVR, RepetitionTimeEnum.TR2000, BodyPartEnum.EYE},
+        MRSeriesRenameEnum.CVR2000_EAR: {
+            MRSeriesRenameEnum.CVR,
+            RepetitionTimeEnum.TR2000,
+            BodyPartEnum.EAR,
+        },
+        MRSeriesRenameEnum.CVR2000_EYE: {
+            MRSeriesRenameEnum.CVR,
+            RepetitionTimeEnum.TR2000,
+            BodyPartEnum.EYE,
+        },
         MRSeriesRenameEnum.CVR2000: {MRSeriesRenameEnum.CVR, RepetitionTimeEnum.TR2000},
         MRSeriesRenameEnum.CVR1000: {MRSeriesRenameEnum.CVR, RepetitionTimeEnum.TR1000},
         MRSeriesRenameEnum.CVR: {MRSeriesRenameEnum.CVR},
     }
 
-    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum], ...] = (MRAcquisitionTypeEnum.TYPE_2D,)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum], ...] = (
+        MRAcquisitionTypeEnum.TYPE_2D,
+    )
 
     @classmethod
-    def get_repetition_time(cls, dicom_ds: DicomDataset) -> Union[RepetitionTimeEnum, NullEnum]:
+    def get_repetition_time(
+        cls, dicom_ds: DicomDataset
+    ) -> Union[RepetitionTimeEnum, NullEnum]:
         """獲取重複時間資訊 - 純函數"""
         repetition_time = dicom_ds.get((0x18, 0x80))
 
@@ -214,7 +266,9 @@ class CVRProcessingStrategy(MRRenameSeriesProcessingStrategy):
         return NullEnum.NULL
 
     @classmethod
-    def get_body_part_from_description(cls, dicom_ds: DicomDataset) -> Union[BodyPartEnum, NullEnum]:
+    def get_body_part_from_description(
+        cls, dicom_ds: DicomDataset
+    ) -> Union[BodyPartEnum, NullEnum]:
         """從描述中獲取身體部位 - 純函數"""
         series_description = dicom_ds.get((0x08, 0x103E))
 
@@ -238,7 +292,9 @@ class CVRProcessingStrategy(MRRenameSeriesProcessingStrategy):
             if modality_enum != self.modality:
                 return NullEnum.NULL
 
-            mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+            mr_acquisition_type_enum = (
+                self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+            )
             if mr_acquisition_type_enum not in self.mr_acquisition_type:
                 return NullEnum.NULL
 
@@ -263,7 +319,7 @@ class CVRProcessingStrategy(MRRenameSeriesProcessingStrategy):
                     for rename_enum, required_set in sorted(
                         self.type_2d_series_rename_dict.items(),
                         key=lambda x: len(x[1]),
-                        reverse=True
+                        reverse=True,
                     ):
                         if required_set.issubset(group_results):
                             return rename_enum
@@ -274,25 +330,34 @@ class CVRProcessingStrategy(MRRenameSeriesProcessingStrategy):
             return NullEnum.NULL
 
         except Exception as e:
-            raise ProcessingError(f"CVR 處理失敗: {str(e)}", processing_stage="cvr_processing")
+            raise ProcessingError(
+                f"CVR 處理失敗: {str(e)}", processing_stage="cvr_processing"
+            )
 
 
 class RestingProcessingStrategy(MRRenameSeriesProcessingStrategy):
     """Resting State 處理策略 - 遵循 .cursor 規則"""
 
     series_rename_mapping = {
-        MRSeriesRenameEnum.RESTING: re.compile('.*(Resting|REST).*$', re.IGNORECASE),
+        MRSeriesRenameEnum.RESTING: re.compile(".*(Resting|REST).*$", re.IGNORECASE),
     }
 
     type_2d_series_rename_dict = {
-        MRSeriesRenameEnum.RESTING2000: {MRSeriesRenameEnum.RESTING, RepetitionTimeEnum.TR2000},
+        MRSeriesRenameEnum.RESTING2000: {
+            MRSeriesRenameEnum.RESTING,
+            RepetitionTimeEnum.TR2000,
+        },
         MRSeriesRenameEnum.RESTING: {MRSeriesRenameEnum.RESTING},
     }
 
-    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum], ...] = (MRAcquisitionTypeEnum.TYPE_2D,)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum], ...] = (
+        MRAcquisitionTypeEnum.TYPE_2D,
+    )
 
     @classmethod
-    def get_repetition_time(cls, dicom_ds: DicomDataset) -> Union[RepetitionTimeEnum, NullEnum]:
+    def get_repetition_time(
+        cls, dicom_ds: DicomDataset
+    ) -> Union[RepetitionTimeEnum, NullEnum]:
         """獲取重複時間資訊 - 重用 CVR 的邏輯"""
         return CVRProcessingStrategy.get_repetition_time(dicom_ds)
 
@@ -304,7 +369,9 @@ class RestingProcessingStrategy(MRRenameSeriesProcessingStrategy):
             if modality_enum != self.modality:
                 return NullEnum.NULL
 
-            mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+            mr_acquisition_type_enum = (
+                self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+            )
             if mr_acquisition_type_enum not in self.mr_acquisition_type:
                 return NullEnum.NULL
 
@@ -325,7 +392,10 @@ class RestingProcessingStrategy(MRRenameSeriesProcessingStrategy):
                     group_results.discard(NullEnum.NULL)
 
                     # 匹配重新命名字典
-                    for rename_enum, required_set in self.type_2d_series_rename_dict.items():
+                    for (
+                        rename_enum,
+                        required_set,
+                    ) in self.type_2d_series_rename_dict.items():
                         if required_set.issubset(group_results):
                             return rename_enum
 
@@ -335,24 +405,28 @@ class RestingProcessingStrategy(MRRenameSeriesProcessingStrategy):
             return NullEnum.NULL
 
         except Exception as e:
-            raise ProcessingError(f"Resting 處理失敗: {str(e)}", processing_stage="resting_processing")
+            raise ProcessingError(
+                f"Resting 處理失敗: {str(e)}", processing_stage="resting_processing"
+            )
 
 
 class DTIProcessingStrategy(MRRenameSeriesProcessingStrategy):
     """DTI (Diffusion Tensor Imaging) 處理策略 - 遵循 .cursor 規則"""
 
     series_rename_mapping = {
-        MRSeriesRenameEnum.DTI32D: re.compile('.*(DTI).*', re.IGNORECASE),
-        MRSeriesRenameEnum.DTI64D: re.compile('.*(DTI).*', re.IGNORECASE),
+        MRSeriesRenameEnum.DTI32D: re.compile(".*(DTI).*", re.IGNORECASE),
+        MRSeriesRenameEnum.DTI64D: re.compile(".*(DTI).*", re.IGNORECASE),
     }
 
     mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum], ...] = (
         MRAcquisitionTypeEnum.TYPE_2D,
-        MRAcquisitionTypeEnum.TYPE_3D
+        MRAcquisitionTypeEnum.TYPE_3D,
     )
 
     @classmethod
-    def get_dti_directions(cls, dicom_ds: DicomDataset) -> Union[DTISeriesEnum, NullEnum]:
+    def get_dti_directions(
+        cls, dicom_ds: DicomDataset
+    ) -> Union[DTISeriesEnum, NullEnum]:
         """獲取 DTI 方向數量 - 純函數"""
         # 檢查 DTI 相關的 DICOM 標籤
         series_description = dicom_ds.get((0x08, 0x103E))
@@ -363,9 +437,9 @@ class DTIProcessingStrategy(MRRenameSeriesProcessingStrategy):
         desc = series_description.value.upper()
 
         # 根據描述中的數字判斷方向數
-        if '64' in desc:
+        if "64" in desc:
             return DTISeriesEnum.DTI64D
-        elif '32' in desc:
+        elif "32" in desc:
             return DTISeriesEnum.DTI32D
 
         # 預設返回 32 方向
@@ -379,7 +453,9 @@ class DTIProcessingStrategy(MRRenameSeriesProcessingStrategy):
             if modality_enum != self.modality:
                 return NullEnum.NULL
 
-            mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+            mr_acquisition_type_enum = (
+                self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+            )
             if mr_acquisition_type_enum not in self.mr_acquisition_type:
                 return NullEnum.NULL
 
@@ -388,7 +464,7 @@ class DTIProcessingStrategy(MRRenameSeriesProcessingStrategy):
                 return NullEnum.NULL
 
             # 檢查 DTI 模式
-            if 'DTI' in series_description.value.upper():
+            if "DTI" in series_description.value.upper():
                 dti_directions = self.get_dti_directions(dicom_ds)
 
                 if dti_directions == DTISeriesEnum.DTI32D:
@@ -399,4 +475,6 @@ class DTIProcessingStrategy(MRRenameSeriesProcessingStrategy):
             return NullEnum.NULL
 
         except Exception as e:
-            raise ProcessingError(f"DTI 處理失敗: {str(e)}", processing_stage="dti_processing")
+            raise ProcessingError(
+                f"DTI 處理失敗: {str(e)}", processing_stage="dti_processing"
+            )

@@ -2,42 +2,50 @@
 DICOM 處理策略模組
 """
 
-from .additional_strategies import (
+from .functional import (
     CVRProcessingStrategy,
     DTIProcessingStrategy,
+    RestingProcessingStrategy,
+)
+from .perfusion import (
+    ASLProcessingStrategy,
+    DSCProcessingStrategy,
+)
+from .special import (
+    ESWANProcessingStrategy,
     MRABrainProcessingStrategy,
     MRANeckProcessingStrategy,
     MRAVRBrainProcessingStrategy,
     MRAVRNeckProcessingStrategy,
-    RestingProcessingStrategy,
+    SWANProcessingStrategy,
 )
-from .strategies import (
+from .structure import (
     ADCProcessingStrategy,
-    ASLProcessingStrategy,
-    DSCProcessingStrategy,
     DwiProcessingStrategy,
     EADCProcessingStrategy,
-    ESWANProcessingStrategy,
-    SWANProcessingStrategy,
     T1ProcessingStrategy,
     T2ProcessingStrategy,
 )
 
 __all__ = [
-    'DwiProcessingStrategy',
-    'ADCProcessingStrategy',
-    'SWANProcessingStrategy',
-    'T1ProcessingStrategy',
-    'T2ProcessingStrategy',
-    'ASLProcessingStrategy',
-    'DSCProcessingStrategy',
-    'EADCProcessingStrategy',
-    'ESWANProcessingStrategy',
-    'MRABrainProcessingStrategy',
-    'MRANeckProcessingStrategy',
-    'MRAVRBrainProcessingStrategy',
-    'MRAVRNeckProcessingStrategy',
-    'CVRProcessingStrategy',
-    'RestingProcessingStrategy',
-    'DTIProcessingStrategy',
+    # Structure
+    "DwiProcessingStrategy",
+    "ADCProcessingStrategy",
+    "T1ProcessingStrategy",
+    "T2ProcessingStrategy",
+    "EADCProcessingStrategy",
+    # Special
+    "SWANProcessingStrategy",
+    "ESWANProcessingStrategy",
+    "MRABrainProcessingStrategy",
+    "MRANeckProcessingStrategy",
+    "MRAVRBrainProcessingStrategy",
+    "MRAVRNeckProcessingStrategy",
+    # Perfusion
+    "ASLProcessingStrategy",
+    "DSCProcessingStrategy",
+    # Functional
+    "CVRProcessingStrategy",
+    "RestingProcessingStrategy",
+    "DTIProcessingStrategy",
 ]
