@@ -9,7 +9,12 @@ from typing import Any, Optional
 class Dicom2NiiError(Exception):
     """DICOM2NII 專案的基礎例外類別 - 遵循 Fail Fast 原則"""
 
-    def __init__(self, message: str, details: Optional[dict[str, Any]] = None, cause: Optional[Exception] = None):
+    def __init__(
+        self,
+        message: str,
+        details: Optional[dict[str, Any]] = None,
+        cause: Optional[Exception] = None,
+    ):
         super().__init__(message)
         self.message = message
         self.details = details or {}
@@ -23,7 +28,7 @@ class Dicom2NiiError(Exception):
             "message": self.message,
             "details": self.details,
             "cause": str(self.cause) if self.cause else None,
-            "traceback": self.traceback_str
+            "traceback": self.traceback_str,
         }
 
 
@@ -31,84 +36,106 @@ class ProcessingError(Dicom2NiiError):
     """處理過程中發生的錯誤"""
 
     def __init__(self, message: str, processing_stage: Optional[str] = None, **kwargs):
-        details = kwargs.get('details', {})
+        details = kwargs.get("details", {})
         if processing_stage:
-            details['processing_stage'] = processing_stage
-        super().__init__(message, details, kwargs.get('cause'))
+            details["processing_stage"] = processing_stage
+        super().__init__(message, details, kwargs.get("cause"))
 
 
 class ConversionError(Dicom2NiiError):
     """轉換過程中發生的錯誤"""
 
     def __init__(self, message: str, conversion_type: Optional[str] = None, **kwargs):
-        details = kwargs.get('details', {})
+        details = kwargs.get("details", {})
         if conversion_type:
-            details['conversion_type'] = conversion_type
-        super().__init__(message, details, kwargs.get('cause'))
+            details["conversion_type"] = conversion_type
+        super().__init__(message, details, kwargs.get("cause"))
 
 
 class ConfigurationError(Dicom2NiiError):
     """配置相關的錯誤 - 提供使用者友好的錯誤訊息"""
 
     def __init__(self, message: str, config_key: Optional[str] = None, **kwargs):
-        details = kwargs.get('details', {})
+        details = kwargs.get("details", {})
         if config_key:
-            details['config_key'] = config_key
-        super().__init__(message, details, kwargs.get('cause'))
+            details["config_key"] = config_key
+        super().__init__(message, details, kwargs.get("cause"))
 
 
 class FileOperationError(Dicom2NiiError):
     """檔案操作相關的錯誤"""
 
-    def __init__(self, message: str, file_path: Optional[str] = None, operation: Optional[str] = None, **kwargs):
-        details = kwargs.get('details', {})
+    def __init__(
+        self,
+        message: str,
+        file_path: Optional[str] = None,
+        operation: Optional[str] = None,
+        **kwargs,
+    ):
+        details = kwargs.get("details", {})
         if file_path:
-            details['file_path'] = file_path
+            details["file_path"] = file_path
         if operation:
-            details['operation'] = operation
-        super().__init__(message, details, kwargs.get('cause'))
+            details["operation"] = operation
+        super().__init__(message, details, kwargs.get("cause"))
 
 
 class UploadError(Dicom2NiiError):
     """上傳過程中發生的錯誤"""
 
     def __init__(self, message: str, upload_target: Optional[str] = None, **kwargs):
-        details = kwargs.get('details', {})
+        details = kwargs.get("details", {})
         if upload_target:
-            details['upload_target'] = upload_target
-        super().__init__(message, details, kwargs.get('cause'))
+            details["upload_target"] = upload_target
+        super().__init__(message, details, kwargs.get("cause"))
 
 
 class ValidationError(Dicom2NiiError):
     """驗證失敗的錯誤 - 提供具體的驗證失敗原因"""
 
-    def __init__(self, message: str, field_name: Optional[str] = None, field_value: Optional[Any] = None, **kwargs):
-        details = kwargs.get('details', {})
+    def __init__(
+        self,
+        message: str,
+        field_name: Optional[str] = None,
+        field_value: Optional[Any] = None,
+        **kwargs,
+    ):
+        details = kwargs.get("details", {})
         if field_name:
-            details['field_name'] = field_name
+            details["field_name"] = field_name
         if field_value is not None:
-            details['field_value'] = str(field_value)
-        super().__init__(message, details, kwargs.get('cause'))
+            details["field_value"] = str(field_value)
+        super().__init__(message, details, kwargs.get("cause"))
 
 
 class DicomParsingError(ProcessingError):
     """DICOM 檔案解析錯誤"""
 
     def __init__(self, message: str, dicom_file: Optional[str] = None, **kwargs):
-        details = kwargs.get('details', {})
+        details = kwargs.get("details", {})
         if dicom_file:
-            details['dicom_file'] = dicom_file
-        super().__init__(message, processing_stage="dicom_parsing", details=details, cause=kwargs.get('cause'))
+            details["dicom_file"] = dicom_file
+        super().__init__(
+            message,
+            processing_stage="dicom_parsing",
+            details=details,
+            cause=kwargs.get("cause"),
+        )
 
 
 class NiftiProcessingError(ProcessingError):
     """NIfTI 檔案處理錯誤"""
 
     def __init__(self, message: str, nifti_file: Optional[str] = None, **kwargs):
-        details = kwargs.get('details', {})
+        details = kwargs.get("details", {})
         if nifti_file:
-            details['nifti_file'] = nifti_file
-        super().__init__(message, processing_stage="nifti_processing", details=details, cause=kwargs.get('cause'))
+            details["nifti_file"] = nifti_file
+        super().__init__(
+            message,
+            processing_stage="nifti_processing",
+            details=details,
+            cause=kwargs.get("cause"),
+        )
 
 
 # 錯誤處理裝飾器 - 實施 Guard Clauses 模式
@@ -119,6 +146,7 @@ def handle_errors(operation_name: str, logger=None):
         operation_name: 操作名稱
         logger: 日誌記錄器 (可選)
     """
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             try:
@@ -130,15 +158,21 @@ def handle_errors(operation_name: str, logger=None):
                 # 包裝未知例外
                 error = Dicom2NiiError(
                     f"{operation_name} 操作失敗: {str(e)}",
-                    details={"function": func.__name__, "args": str(args), "kwargs": str(kwargs)},
-                    cause=e
+                    details={
+                        "function": func.__name__,
+                        "args": str(args),
+                        "kwargs": str(kwargs),
+                    },
+                    cause=e,
                 )
 
                 if logger:
                     logger.log_error(error)
 
                 raise error
+
         return wrapper
+
     return decorator
 
 
@@ -156,12 +190,12 @@ def validate_required_params(**params) -> None:
             raise ValidationError(
                 f"必要參數 '{param_name}' 不能為 None",
                 field_name=param_name,
-                field_value=param_value
+                field_value=param_value,
             )
 
         if isinstance(param_value, str) and not param_value.strip():
             raise ValidationError(
                 f"必要參數 '{param_name}' 不能為空字串",
                 field_name=param_name,
-                field_value=param_value
+                field_value=param_value,
             )

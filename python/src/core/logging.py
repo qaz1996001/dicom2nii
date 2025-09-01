@@ -33,7 +33,7 @@ class StructuredLogger:
         # 控制台處理器
         console_handler = logging.StreamHandler(sys.stdout)
         console_formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
         console_handler.setFormatter(console_formatter)
         self.logger.addHandler(console_handler)
@@ -43,7 +43,9 @@ class StructuredLogger:
         # file_handler.setFormatter(console_formatter)
         # self.logger.addHandler(file_handler)
 
-    def log_error(self, error: Exception, context: Optional[dict[str, Any]] = None) -> None:
+    def log_error(
+        self, error: Exception, context: Optional[dict[str, Any]] = None
+    ) -> None:
         """記錄錯誤 - 遵循錯誤處理規則的結構化日誌
 
         Args:
@@ -57,44 +59,38 @@ class StructuredLogger:
                 "error_message": str(error),
                 "traceback": traceback.format_exc(),
                 "context": context or {},
-                "is_dicom2nii_error": isinstance(error, Dicom2NiiError)
-            }
+                "is_dicom2nii_error": isinstance(error, Dicom2NiiError),
+            },
         )
 
     def log_processing_start(self, operation: str, details: dict[str, Any]) -> None:
         """記錄處理開始"""
         self.logger.info(
             f"Starting {operation}",
-            extra={
-                "operation": operation,
-                "details": details,
-                "stage": "start"
-            }
+            extra={"operation": operation, "details": details, "stage": "start"},
         )
 
     def log_processing_success(self, operation: str, details: dict[str, Any]) -> None:
         """記錄處理成功"""
         self.logger.info(
             f"Completed {operation}",
-            extra={
-                "operation": operation,
-                "details": details,
-                "stage": "success"
-            }
+            extra={"operation": operation, "details": details, "stage": "success"},
         )
 
     def log_processing_progress(self, operation: str, progress: dict[str, Any]) -> None:
         """記錄處理進度"""
         self.logger.info(
             f"Progress {operation}",
-            extra={
-                "operation": operation,
-                "progress": progress,
-                "stage": "progress"
-            }
+            extra={"operation": operation, "progress": progress, "stage": "progress"},
         )
 
-    def log_file_operation(self, operation: str, file_path: Path, success: bool, details: Optional[dict] = None) -> None:
+    def log_file_operation(
+        self,
+        operation: str,
+        file_path: Path,
+        success: bool,
+        details: Optional[dict] = None,
+    ) -> None:
         """記錄檔案操作"""
         level = logging.INFO if success else logging.ERROR
         message = f"File {operation} {'succeeded' if success else 'failed'}"
@@ -106,18 +102,14 @@ class StructuredLogger:
                 "operation": operation,
                 "file_path": str(file_path),
                 "success": success,
-                "details": details or {}
-            }
+                "details": details or {},
+            },
         )
 
     def log_conversion_stats(self, stats: dict[str, Any]) -> None:
         """記錄轉換統計資訊"""
         self.logger.info(
-            "Conversion statistics",
-            extra={
-                "statistics": stats,
-                "stage": "completion"
-            }
+            "Conversion statistics", extra={"statistics": stats, "stage": "completion"}
         )
 
 
@@ -158,7 +150,7 @@ def setup_logging(level: int = logging.INFO, log_file: Optional[str] = None) -> 
     # 控制台處理器
     console_handler = logging.StreamHandler(sys.stdout)
     console_formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     console_handler.setFormatter(console_formatter)
     root_logger.addHandler(console_handler)
@@ -167,7 +159,7 @@ def setup_logging(level: int = logging.INFO, log_file: Optional[str] = None) -> 
     if log_file:
         file_handler = logging.FileHandler(log_file)
         file_formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(pathname)s:%(lineno)d'
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(pathname)s:%(lineno)d"
         )
         file_handler.setFormatter(file_formatter)
         root_logger.addHandler(file_handler)

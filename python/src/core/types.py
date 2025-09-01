@@ -15,7 +15,7 @@ PathLike = Union[str, Path]
 ProcessingResult = dict[str, Any]
 
 # 策略列表型別
-StrategyList = list['ProcessingStrategy']
+StrategyList = list["ProcessingStrategy"]
 
 # 執行器型別
 ExecutorType = Optional[Executor]
