@@ -8,9 +8,9 @@ from .dicom_rename_manager import DicomRenameManager
 from .upload_manager import SqlUploadManager, UploadManager
 
 __all__ = [
-    'BaseManager',
-    'ConvertManager',
-    'DicomRenameManager',
-    'UploadManager',
-    'SqlUploadManager',
+    "BaseManager",
+    "ConvertManager",
+    "DicomRenameManager",
+    "UploadManager",
+    "SqlUploadManager",
 ]

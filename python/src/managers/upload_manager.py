@@ -17,10 +17,12 @@ from .base import BaseManager
 class UploadManager(BaseManager):
     """統一的上傳管理器"""
 
-    def __init__(self,
-                 input_path: Union[str, Path],
-                 web_url: Optional[str] = None,
-                 worker_count: int = Config.DEFAULT_WORKER_COUNT):
+    def __init__(
+        self,
+        input_path: Union[str, Path],
+        web_url: Optional[str] = None,
+        worker_count: int = Config.DEFAULT_WORKER_COUNT,
+    ):
         """初始化上傳管理器
 
         Args:
@@ -52,7 +54,9 @@ class UploadManager(BaseManager):
         except Exception as e:
             raise UploadError(f"上傳管理器執行失敗: {str(e)}")
 
-    def _upload_with_executor(self, study_paths: list[Path], executor: ThreadPoolExecutor) -> None:
+    def _upload_with_executor(
+        self, study_paths: list[Path], executor: ThreadPoolExecutor
+    ) -> None:
         """使用執行器進行並行上傳"""
         futures: list[Future] = []
 
@@ -77,7 +81,9 @@ class UploadManager(BaseManager):
                 if item.is_dir():
                     # 上傳目錄中的所有檔案
                     for file_path in item.iterdir():
-                        self._upload_file_metadata(study_path, file_path, is_nested=True)
+                        self._upload_file_metadata(
+                            study_path, file_path, is_nested=True
+                        )
                 elif item.is_file():
                     # 直接上傳檔案
                     self._upload_file_metadata(study_path, item, is_nested=False)
@@ -87,7 +93,9 @@ class UploadManager(BaseManager):
         except Exception as e:
             raise UploadError(f"上傳檢查失敗 {study_path}: {str(e)}")
 
-    def _upload_file_metadata(self, study_path: Path, file_path: Path, is_nested: bool = True) -> None:
+    def _upload_file_metadata(
+        self, study_path: Path, file_path: Path, is_nested: bool = True
+    ) -> None:
         """上傳檔案元資料到 SQL
 
         Args:
@@ -98,23 +106,20 @@ class UploadManager(BaseManager):
         try:
             # 建構檔案 URL
             if is_nested:
-                file_url = f'{study_path.name}/{file_path.parent.name}/{file_path.name}'
+                file_url = f"{study_path.name}/{file_path.parent.name}/{file_path.name}"
             else:
-                file_url = f'{study_path.name}/{file_path.name}'
+                file_url = f"{study_path.name}/{file_path.name}"
 
             self._log_progress(f"上傳檔案: {file_url}")
 
             # 準備上傳資料
-            files = {'file': open(file_path, 'rb')}
-            form_data = {'file_url': file_url}
+            files = {"file": open(file_path, "rb")}
+            form_data = {"file_url": file_url}
 
             # 發送請求
             with requests.Session() as session:
                 response = session.post(
-                    url=f'{self.web_url}file/',
-                    files=files,
-                    data=form_data,
-                    timeout=30
+                    url=f"{self.web_url}file/", files=files, data=form_data, timeout=30
                 )
 
                 if response.status_code != 200:
@@ -126,8 +131,8 @@ class UploadManager(BaseManager):
             raise UploadError(f"上傳檔案元資料失敗 {file_path}: {str(e)}")
         finally:
             # 確保檔案被關閉
-            if 'files' in locals():
-                files['file'].close()
+            if "files" in locals():
+                files["file"].close()
 
     def upload_nifti_files(self, executor: ExecutorType = None) -> None:
         """專門上傳 NIfTI 檔案"""
@@ -135,13 +140,13 @@ class UploadManager(BaseManager):
             study_paths = self._get_study_paths()
 
             for study_path in study_paths:
-                nifti_files = list(study_path.rglob('*.nii.gz'))
+                nifti_files = list(study_path.rglob("*.nii.gz"))
 
                 for nifti_file in nifti_files:
                     self._upload_file_metadata(
                         study_path,
                         nifti_file,
-                        is_nested=nifti_file.parent != study_path
+                        is_nested=nifti_file.parent != study_path,
                     )
 
         except Exception as e:
@@ -153,13 +158,13 @@ class UploadManager(BaseManager):
             study_paths = self._get_study_paths()
 
             for study_path in study_paths:
-                dicom_files = list(study_path.rglob('*.dcm'))
+                dicom_files = list(study_path.rglob("*.dcm"))
 
                 for dicom_file in dicom_files:
                     self._upload_file_metadata(
                         study_path,
                         dicom_file,
-                        is_nested=dicom_file.parent != study_path
+                        is_nested=dicom_file.parent != study_path,
                     )
 
         except Exception as e:
@@ -197,7 +202,9 @@ class SqlUploadManager(BaseManager):
         """處理檢查元資料"""
         try:
             # 尋找 .nii.gz 檔案和對應的元資料
-            nifti_files = [f for f in study_path.iterdir() if f.name.endswith('.nii.gz')]
+            nifti_files = [
+                f for f in study_path.iterdir() if f.name.endswith(".nii.gz")
+            ]
 
             for nifti_file in nifti_files:
                 meta_file = self._find_corresponding_meta_file(nifti_file)
@@ -210,11 +217,11 @@ class SqlUploadManager(BaseManager):
 
     def _find_corresponding_meta_file(self, nifti_file: Path) -> Optional[Path]:
         """尋找對應的元資料檔案"""
-        meta_folder = nifti_file.parent / '.meta'
+        meta_folder = nifti_file.parent / ".meta"
         if not meta_folder.exists():
             return None
 
-        meta_file_name = nifti_file.name.replace('.nii.gz', '.jsonlines')
+        meta_file_name = nifti_file.name.replace(".nii.gz", ".jsonlines")
         meta_file = meta_folder / meta_file_name
 
         return meta_file if meta_file.exists() else None

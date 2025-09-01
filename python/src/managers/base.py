@@ -35,11 +35,13 @@ class BaseManager(metaclass=ABCMeta):
             raise ProcessingError(
                 f"輸入路徑不存在: {input_path}",
                 processing_stage="initialization",
-                details={"input_path": str(input_path)}
+                details={"input_path": str(input_path)},
             )
 
         # 初始化結構化日誌記錄器
-        self._logger: StructuredLogger = get_logger(f"manager.{self.__class__.__name__.lower()}")
+        self._logger: StructuredLogger = get_logger(
+            f"manager.{self.__class__.__name__.lower()}"
+        )
 
     @property
     def input_path(self) -> Path:
@@ -96,14 +98,14 @@ class BaseManager(metaclass=ABCMeta):
         # 轉換為專案例外 (如果不是的話)
         if not isinstance(error, ProcessingError):
             processing_error = ProcessingError(
-                f"{context}: {str(error)}",
-                processing_stage=context,
-                cause=error
+                f"{context}: {str(error)}", processing_stage=context, cause=error
             )
         else:
             processing_error = error
 
         # 結構化日誌記錄
-        self._logger.log_error(processing_error, context={"manager": self.__class__.__name__})
+        self._logger.log_error(
+            processing_error, context={"manager": self.__class__.__name__}
+        )
 
         # 不重新拋出，讓呼叫者決定如何處理

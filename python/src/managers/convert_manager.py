@@ -18,11 +18,13 @@ from .base import BaseManager
 class ConvertManager(BaseManager):
     """轉換管理器 - 統一管理所有轉換流程"""
 
-    def __init__(self,
-                 input_path: Union[str, Path],
-                 output_dicom_path: Optional[Union[str, Path]] = None,
-                 output_nifti_path: Optional[Union[str, Path]] = None,
-                 worker_count: int = Config.DEFAULT_WORKER_COUNT):
+    def __init__(
+        self,
+        input_path: Union[str, Path],
+        output_dicom_path: Optional[Union[str, Path]] = None,
+        output_nifti_path: Optional[Union[str, Path]] = None,
+        worker_count: int = Config.DEFAULT_WORKER_COUNT,
+    ):
         """初始化轉換管理器
 
         Args:
@@ -62,7 +64,9 @@ class ConvertManager(BaseManager):
                 # 假設輸入是已重新命名的 DICOM，轉換為 NIfTI
                 self._run_dicom_to_nifti_conversion(executor)
             else:
-                raise ProcessingError("必須提供至少一個輸出路徑 (output_dicom 或 output_nifti)")
+                raise ProcessingError(
+                    "必須提供至少一個輸出路徑 (output_dicom 或 output_nifti)"
+                )
 
             end_time = time.time()
             self._log_progress(f"轉換完成，耗時: {end_time - start_time:.2f} 秒")
@@ -79,33 +83,32 @@ class ConvertManager(BaseManager):
             dicom_source_path = self.input_path
             if self.output_dicom_path:
                 self._log_progress("步驟 1: 執行 DICOM 重新命名")
-                
+
                 from .dicom_rename_manager import DicomRenameManager
+
                 dicom_rename_manager = DicomRenameManager(
-                    input_path=self.input_path,
-                    output_path=self.output_dicom_path
+                    input_path=self.input_path, output_path=self.output_dicom_path
                 )
-                
+
                 if executor:
                     dicom_rename_manager.run(executor)
                 else:
                     with self._create_executor(self.worker_count) as rename_executor:
                         dicom_rename_manager.run(rename_executor)
-                
+
                 # 更新源路徑為重新命名後的 DICOM 路徑
                 dicom_source_path = self.output_dicom_path
-                
+
                 # 生成 DICOM 報告
                 generate_study_report(self.output_dicom_path)
                 self._log_progress("DICOM 重新命名完成")
 
             # 步驟 2: 執行 DICOM 到 NIfTI 轉換
             self._log_progress("步驟 2: 執行 DICOM 到 NIfTI 轉換")
-            
+
             if not self._dicom_to_nifti_converter:
                 self._dicom_to_nifti_converter = DicomToNiftiConverter(
-                    str(dicom_source_path),
-                    str(self.output_nifti_path)
+                    str(dicom_source_path), str(self.output_nifti_path)
                 )
 
             # 執行轉換
@@ -131,29 +134,29 @@ class ConvertManager(BaseManager):
         """執行僅 DICOM 重新命名流程 - 使用正確的重新命名邏輯"""
         try:
             self._log_progress("開始 DICOM 重新命名")
-            
+
             # 使用專門的 DICOM 重新命名管理器
             from .dicom_rename_manager import DicomRenameManager
-            
+
             dicom_rename_manager = DicomRenameManager(
-                input_path=self.input_path,
-                output_path=self.output_dicom_path
+                input_path=self.input_path, output_path=self.output_dicom_path
             )
-            
+
             # 執行重新命名
             if executor:
                 dicom_rename_manager.run(executor)
             else:
                 with self._create_executor(self.worker_count) as rename_executor:
                     dicom_rename_manager.run(rename_executor)
-            
+
             # 生成報告
             if self.output_dicom_path and self.output_dicom_path.exists():
                 from ..utils.reporting import generate_study_report
+
                 generate_study_report(self.output_dicom_path)
-            
+
             self._log_progress("DICOM 重新命名完成")
-            
+
         except Exception as e:
             raise ProcessingError(f"DICOM 重新命名失敗: {str(e)}")
 
@@ -165,8 +168,7 @@ class ConvertManager(BaseManager):
             # 建立轉換器
             if not self._nifti_to_dicom_converter:
                 self._nifti_to_dicom_converter = NiftiToDicomConverter(
-                    str(self.input_path),
-                    str(self.output_dicom_path)
+                    str(self.input_path), str(self.output_dicom_path)
                 )
 
             # 執行轉換
@@ -194,7 +196,9 @@ class ConvertManager(BaseManager):
             self._log_progress("開始 NIfTI 後處理")
 
             if not self._nifti_postprocessor:
-                self._nifti_postprocessor = NiftiPostProcessManager(self.output_nifti_path)
+                self._nifti_postprocessor = NiftiPostProcessManager(
+                    self.output_nifti_path
+                )
 
             self._nifti_postprocessor.run()
 
@@ -209,16 +213,18 @@ class ConvertManager(BaseManager):
 
         try:
             if self._dicom_to_nifti_converter:
-                stats['dicom_to_nifti'] = self._dicom_to_nifti_converter.get_conversion_statistics()
+                stats["dicom_to_nifti"] = (
+                    self._dicom_to_nifti_converter.get_conversion_statistics()
+                )
 
             # 添加其他統計資訊
             if self.output_nifti_path and self.output_nifti_path.exists():
-                nifti_files = list(self.output_nifti_path.rglob('*.nii.gz'))
-                stats['total_nifti_files'] = len(nifti_files)
+                nifti_files = list(self.output_nifti_path.rglob("*.nii.gz"))
+                stats["total_nifti_files"] = len(nifti_files)
 
             if self.output_dicom_path and self.output_dicom_path.exists():
-                dicom_files = list(self.output_dicom_path.rglob('*.dcm'))
-                stats['total_output_dicom_files'] = len(dicom_files)
+                dicom_files = list(self.output_dicom_path.rglob("*.dcm"))
+                stats["total_output_dicom_files"] = len(dicom_files)
 
             return stats
 
