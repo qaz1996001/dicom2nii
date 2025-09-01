@@ -27,53 +27,47 @@ except ImportError:
 def parse_legacy_arguments() -> argparse.Namespace:
     """解析舊版本的命令列參數 (向後相容)"""
     parser = argparse.ArgumentParser(
-        description='DICOM2NII 轉換工具 (舊版相容介面)',
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        description="DICOM2NII 轉換工具 (舊版相容介面)",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     # 保持與原始 main.py 相同的參數
     parser.add_argument(
-        '--input_dicom',
-        dest='input_dicom',
-        type=str,
-        help="輸入的原始 DICOM 資料夾"
+        "--input_dicom", dest="input_dicom", type=str, help="輸入的原始 DICOM 資料夾"
     )
     parser.add_argument(
-        '--output_dicom',
-        dest='output_dicom',
+        "--output_dicom",
+        dest="output_dicom",
         type=str,
-        help="輸出的重新命名 DICOM 資料夾"
+        help="輸出的重新命名 DICOM 資料夾",
     )
     parser.add_argument(
-        '--output_nifti',
-        dest='output_nifti',
+        "--output_nifti",
+        dest="output_nifti",
         type=str,
-        help="重新命名 DICOM 輸出到 NIfTI 資料夾"
+        help="重新命名 DICOM 輸出到 NIfTI 資料夾",
     )
     parser.add_argument(
-        '--work',
-        dest='work',
+        "--work",
+        dest="work",
         type=int,
         default=Config.DEFAULT_WORKER_COUNT,
-        help="執行緒數量"
+        help="執行緒數量",
     )
     parser.add_argument(
-        '--upload_all',
-        dest='upload_all',
-        type=str,
-        help="上傳所有檔案"
+        "--upload_all", dest="upload_all", type=str, help="上傳所有檔案"
     )
     parser.add_argument(
-        '--upload_nifti',
-        dest='upload_nifti',
+        "--upload_nifti",
+        dest="upload_nifti",
         type=str,
-        help="上傳重新命名的 NIfTI 資料夾到 SQL 和物件儲存"
+        help="上傳重新命名的 NIfTI 資料夾到 SQL 和物件儲存",
     )
     parser.add_argument(
-        '--upload_dicom',
-        dest='upload_dicom',
+        "--upload_dicom",
+        dest="upload_dicom",
         type=str,
-        help="上傳重新命名的 DICOM 所有檔案到 NAS"
+        help="上傳重新命名的 DICOM 所有檔案到 NAS",
     )
 
     return parser.parse_args()
@@ -91,7 +85,7 @@ def run_legacy_workflow(args: argparse.Namespace) -> None:
                 input_path=args.input_dicom,
                 output_dicom_path=args.output_dicom,
                 output_nifti_path=args.output_nifti,
-                worker_count=args.work
+                worker_count=args.work,
             )
 
             # 執行轉換
@@ -104,18 +98,17 @@ def run_legacy_workflow(args: argparse.Namespace) -> None:
 
         # 上傳處理
         upload_path = None
-        if args.upload_all == 'True':
+        if args.upload_all == "True":
             upload_path = args.output_nifti or args.output_dicom
-        elif args.upload_nifti == 'True':
+        elif args.upload_nifti == "True":
             upload_path = args.output_nifti
-        elif args.upload_dicom == 'True':
+        elif args.upload_dicom == "True":
             upload_path = args.output_dicom
 
         if upload_path:
             print(f"執行檔案上傳: {upload_path}")
             upload_manager = UploadManager(
-                input_path=upload_path,
-                worker_count=args.work
+                input_path=upload_path, worker_count=args.work
             )
             upload_manager.run()
 
@@ -129,7 +122,12 @@ def main() -> None:
     """主要入口點"""
     try:
         # 檢查是否使用新的命令列介面
-        if len(sys.argv) > 1 and sys.argv[1] in ['convert', 'nifti2dicom', 'upload', 'report']:
+        if len(sys.argv) > 1 and sys.argv[1] in [
+            "convert",
+            "nifti2dicom",
+            "upload",
+            "report",
+        ]:
             # 使用新的 CLI
             cli_main()
         else:
@@ -148,5 +146,5 @@ def main() -> None:
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
