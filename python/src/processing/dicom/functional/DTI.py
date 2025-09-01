@@ -94,4 +94,4 @@ class DTIProcessingStrategy(MRRenameSeriesProcessingStrategy):
         except Exception as e:
             raise ProcessingError(
                 f"DTI 處理失敗: {str(e)}", processing_stage="dti_processing"
-            )
+            ) from e

@@ -90,7 +90,7 @@ class DSCProcessingStrategy(MRRenameSeriesProcessingStrategy):
                 f"DSC 處理失敗: {str(e)}",
                 processing_stage="dsc_processing",
                 details={"dicom_ds": dicom_ds},
-            )
+            ) from e
 
     def _process_type(
         self, dicom_ds: DicomDataset, series_mapping: dict, rename_dict: dict

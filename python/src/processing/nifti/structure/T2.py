@@ -24,7 +24,7 @@ class T2NiftiProcessingStrategy(NiftiProcessingStrategy):
             self.delete_small_files(study_path)
             self._rename_t2_files(study_path)
         except Exception as e:
-            raise ProcessingError(f"T2 NIfTI 處理失敗: {str(e)}")
+            raise ProcessingError(f"T2 NIfTI 處理失敗: {str(e)}") from e
 
     def _rename_t2_files(self, study_path: Path) -> None:
         """重新命名 T2 檔案"""

@@ -98,4 +98,4 @@ class RestingProcessingStrategy(MRRenameSeriesProcessingStrategy):
         except Exception as e:
             raise ProcessingError(
                 f"Resting 處理失敗: {str(e)}", processing_stage="resting_processing"
-            )
+            ) from e

@@ -115,7 +115,7 @@ class ADCProcessingStrategy(MRRenameSeriesProcessingStrategy):
         except Exception as e:
             raise ProcessingError(
                 f"ADC 處理失敗: {str(e)}", details={"dicom_ds": dicom_ds}
-            )
+            ) from e
 
 
 class EADCProcessingStrategy(MRRenameSeriesProcessingStrategy):
@@ -152,4 +152,4 @@ class EADCProcessingStrategy(MRRenameSeriesProcessingStrategy):
         except Exception as e:
             raise ProcessingError(
                 f"eADC 處理失敗: {str(e)}", processing_stage="eadc_processing"
-            )
+            ) from e

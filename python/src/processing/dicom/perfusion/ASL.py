@@ -116,4 +116,4 @@ class ASLProcessingStrategy(MRRenameSeriesProcessingStrategy):
                 f"ASL 處理失敗: {str(e)}",
                 processing_stage="asl_processing",
                 details={"dicom_ds": str(dicom_ds)},
-            )
+            ) from e

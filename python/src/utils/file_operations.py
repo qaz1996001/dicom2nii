@@ -18,7 +18,7 @@ def create_directory(path: PathLike, exist_ok: bool = True) -> Path:
         path_obj.mkdir(parents=True, exist_ok=exist_ok)
         return path_obj
     except Exception as e:
-        raise FileOperationError(f"無法建立目錄 {path}: {str(e)}")
+        raise FileOperationError(f"無法建立目錄 {path}: {str(e)}") from e
 
 
 def get_file_size(file_path: PathLike) -> int:
@@ -26,7 +26,7 @@ def get_file_size(file_path: PathLike) -> int:
     try:
         return Path(file_path).stat().st_size
     except Exception as e:
-        raise FileOperationError(f"無法獲取檔案大小 {file_path}: {str(e)}")
+        raise FileOperationError(f"無法獲取檔案大小 {file_path}: {str(e)}") from e
 
 
 @contextmanager
@@ -35,7 +35,7 @@ def safe_file_operation(operation_name: str):
     try:
         yield
     except Exception as e:
-        raise FileOperationError(f"{operation_name} 操作失敗: {str(e)}")
+        raise FileOperationError(f"{operation_name} 操作失敗: {str(e)}") from e
 
 
 def copy_directory_tree(
@@ -45,7 +45,7 @@ def copy_directory_tree(
     try:
         shutil.copytree(src, dst, dirs_exist_ok=dirs_exist_ok)
     except Exception as e:
-        raise FileOperationError(f"複製目錄失敗 {src} -> {dst}: {str(e)}")
+        raise FileOperationError(f"複製目錄失敗 {src} -> {dst}: {str(e)}") from e
 
 
 def move_file(src: PathLike, dst: PathLike) -> None:
@@ -59,7 +59,7 @@ def move_file(src: PathLike, dst: PathLike) -> None:
 
         src_path.rename(dst_path)
     except Exception as e:
-        raise FileOperationError(f"移動檔案失敗 {src} -> {dst}: {str(e)}")
+        raise FileOperationError(f"移動檔案失敗 {src} -> {dst}: {str(e)}") from e
 
 
 def delete_file(file_path: PathLike, missing_ok: bool = True) -> None:
@@ -72,7 +72,7 @@ def delete_file(file_path: PathLike, missing_ok: bool = True) -> None:
             raise FileNotFoundError(f"檔案不存在: {file_path}")
     except Exception as e:
         if not missing_ok:
-            raise FileOperationError(f"刪除檔案失敗 {file_path}: {str(e)}")
+            raise FileOperationError(f"刪除檔案失敗 {file_path}: {str(e)}") from e
 
 
 def find_files_by_pattern(
@@ -86,7 +86,7 @@ def find_files_by_pattern(
         else:
             return list(dir_path.glob(pattern))
     except Exception as e:
-        raise FileOperationError(f"尋找檔案失敗 {directory}/{pattern}: {str(e)}")
+        raise FileOperationError(f"尋找檔案失敗 {directory}/{pattern}: {str(e)}") from e
 
 
 def get_directory_structure(
@@ -119,4 +119,4 @@ def get_directory_structure(
     try:
         return _build_structure(Path(directory))
     except Exception as e:
-        raise FileOperationError(f"獲取目錄結構失敗 {directory}: {str(e)}")
+        raise FileOperationError(f"獲取目錄結構失敗 {directory}: {str(e)}") from e

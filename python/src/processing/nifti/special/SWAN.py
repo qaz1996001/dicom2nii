@@ -23,7 +23,7 @@ class SWANNiftiProcessingStrategy(NiftiProcessingStrategy):
             self.delete_small_files(study_path)
             self._rename_swan_files(study_path)
         except Exception as e:
-            raise ProcessingError(f"SWAN NIfTI 處理失敗: {str(e)}")
+            raise ProcessingError(f"SWAN NIfTI 處理失敗: {str(e)}") from e
 
     def _rename_swan_files(self, study_path: Path) -> None:
         """重新命名 SWAN 檔案"""

@@ -27,7 +27,7 @@ def validate_age_format(age_string: str) -> tuple[bool, str]:
             raise ValidationError(f"無效的年齡格式: {age_string}")
 
     except (ValueError, IndexError) as e:
-        raise ValidationError(f"年齡格式驗證失敗: {str(e)}")
+        raise ValidationError(f"年齡格式驗證失敗: {str(e)}") from e
 
 
 def validate_date_format(date_string: str) -> str:
@@ -58,7 +58,7 @@ def validate_time_format(time_string: str) -> tuple[bool, str]:
             raise ValidationError(f"無效的時間格式: {time_string}")
 
     except (ValueError, IndexError) as e:
-        raise ValidationError(f"時間格式驗證失敗: {str(e)}")
+        raise ValidationError(f"時間格式驗證失敗: {str(e)}") from e
 
 
 def validate_path_exists(path: str) -> bool:

@@ -141,4 +141,4 @@ class CVRProcessingStrategy(MRRenameSeriesProcessingStrategy):
         except Exception as e:
             raise ProcessingError(
                 f"CVR 處理失敗: {str(e)}", processing_stage="cvr_processing"
-            )
+            ) from e

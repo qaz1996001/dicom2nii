@@ -3,7 +3,7 @@
 """
 
 import traceback
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 
 
 class Dicom2NiiError(Exception):
@@ -12,7 +12,7 @@ class Dicom2NiiError(Exception):
     def __init__(
         self,
         message: str,
-        details: Optional[dict[str, Any]] = None,
+        details: Optional[Dict[str, Any]] = None,
         cause: Optional[Exception] = None,
     ):
         super().__init__(message)
@@ -21,7 +21,7 @@ class Dicom2NiiError(Exception):
         self.cause = cause
         self.traceback_str = traceback.format_exc() if cause else None
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         """轉換為字典格式，便於日誌記錄"""
         return {
             "error_type": type(self).__name__,
@@ -151,7 +151,7 @@ def handle_errors(operation_name: str, logger=None):
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
-            except Dicom2NiiError:
+            except Dicom2NiiError as ee :
                 # 重新拋出已知的專案例外
                 raise
             except Exception as e:
@@ -169,7 +169,7 @@ def handle_errors(operation_name: str, logger=None):
                 if logger:
                     logger.log_error(error)
 
-                raise error
+                raise error from e
 
         return wrapper
 

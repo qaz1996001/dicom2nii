@@ -102,7 +102,7 @@ class DicomToNiftiConverter(BaseConverter):
                         print(f"轉換任務失敗: {str(e)}")
 
         except Exception as e:
-            raise ConversionError(f"DICOM 到 NIfTI 轉換失敗: {str(e)}")
+            raise ConversionError(f"DICOM 到 NIfTI 轉換失敗: {str(e)}") from e
 
     def _get_output_series_path(self, series_path: Path) -> Path:
         """獲取輸出序列路徑"""
@@ -152,10 +152,10 @@ class DicomToNiftiConverter(BaseConverter):
 
             return result_str
 
-        except subprocess.TimeoutExpired:
-            raise ConversionError(f"轉換超時: {series_path}")
+        except subprocess.TimeoutExpired as ee:
+            raise ConversionError(f"轉換超時: {series_path}") from ee
         except Exception as e:
-            raise ConversionError(f"轉換序列失敗 {series_path}: {str(e)}")
+            raise ConversionError(f"轉換序列失敗 {series_path}: {str(e)}") from e
 
     def _parse_dcm2niix_output(self, stdout: str) -> str:
         """解析 dcm2niix 輸出"""
@@ -194,7 +194,7 @@ class DicomToNiftiConverter(BaseConverter):
             except FileExistsError:
                 print(f"檔案已存在錯誤: {output_series_path}")
             except Exception as e:
-                raise ConversionError(f"重新命名輸出檔案失敗: {str(e)}")
+                raise ConversionError(f"重新命名輸出檔案失敗: {str(e)}") from e
 
     def get_conversion_statistics(self) -> dict:
         """獲取轉換統計資訊"""
@@ -210,4 +210,4 @@ class DicomToNiftiConverter(BaseConverter):
                 else 0,
             }
         except Exception as e:
-            raise ConversionError(f"獲取轉換統計失敗: {str(e)}")
+            raise ConversionError(f"獲取轉換統計失敗: {str(e)}") from e

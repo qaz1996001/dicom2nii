@@ -61,7 +61,7 @@ class BaseConverter(metaclass=ABCMeta):
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
         except Exception as e:
-            raise ConversionError(f"無法建立輸出目錄 {path.parent}: {str(e)}")
+            raise ConversionError(f"無法建立輸出目錄 {path.parent}: {str(e)}") from e
 
     def _is_excluded(self, name: str) -> bool:
         """檢查是否應該排除"""
@@ -78,7 +78,7 @@ class BaseConverter(metaclass=ABCMeta):
                 output_meta_path = output_study_path / ".meta"
                 copy_directory_tree(meta_path, output_meta_path, dirs_exist_ok=True)
         except Exception as e:
-            raise ConversionError(f"複製元資料失敗: {str(e)}")
+            raise ConversionError(f"複製元資料失敗: {str(e)}") from e
 
     def _get_output_study_path(self, input_study_path: Path) -> Path:
         """獲取輸出檢查路徑"""

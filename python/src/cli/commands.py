@@ -111,7 +111,7 @@ class DicomToNiftiCommand(BaseCommand):
                 print(f"  {key}: {value}")
 
         except Exception as e:
-            raise ConfigurationError(f"DICOM 到 NIfTI 轉換命令失敗: {str(e)}")
+            raise ConfigurationError(f"DICOM 到 NIfTI 轉換命令失敗: {str(e)}") from e
 
 
 class NiftiToDicomCommand(BaseCommand):
@@ -163,7 +163,7 @@ class NiftiToDicomCommand(BaseCommand):
             convert_manager.run()
 
         except Exception as e:
-            raise ConfigurationError(f"NIfTI 到 DICOM 轉換命令失敗: {str(e)}")
+            raise ConfigurationError(f"NIfTI 到 DICOM 轉換命令失敗: {str(e)}") from e
 
 
 class UploadCommand(BaseCommand):
@@ -219,7 +219,7 @@ class UploadCommand(BaseCommand):
                 print("請指定上傳類型: --upload_nifti, --upload_dicom, 或 --upload_all")
 
         except Exception as e:
-            raise ConfigurationError(f"上傳命令失敗: {str(e)}")
+            raise ConfigurationError(f"上傳命令失敗: {str(e)}") from e
 
 
 class ReportCommand(BaseCommand):
@@ -263,4 +263,4 @@ class ReportCommand(BaseCommand):
             print("報告生成完成")
 
         except Exception as e:
-            raise ConfigurationError(f"報告生成命令失敗: {str(e)}")
+            raise ConfigurationError(f"報告生成命令失敗: {str(e)}") from e

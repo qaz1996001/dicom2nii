@@ -403,7 +403,7 @@ class T1ProcessingStrategy(MRRenameSeriesProcessingStrategy):
                 f"T1 處理失敗: {str(e)}",
                 processing_stage="t1_processing",
                 details={"dicom_ds": str(dicom_ds)},
-            )
+            ) from e
 
     def _process_type(
         self, dicom_ds: DicomDataset, series_mapping: dict, rename_dict: dict

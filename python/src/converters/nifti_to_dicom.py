@@ -64,7 +64,7 @@ class NiftiToDicomConverter(BaseConverter):
                 self._convert_study(self.input_path)
 
         except Exception as e:
-            raise ConversionError(f"NIfTI 到 DICOM 轉換失敗: {str(e)}")
+            raise ConversionError(f"NIfTI 到 DICOM 轉換失敗: {str(e)}") from e
 
     def _convert_study(self, study_path: Path) -> None:
         """轉換單一檢查"""
@@ -90,7 +90,7 @@ class NiftiToDicomConverter(BaseConverter):
                 self._convert_nifti_to_dicom(nifti_file, meta_file, output_folder)
 
         except Exception as e:
-            raise ConversionError(f"轉換檢查失敗 {study_path}: {str(e)}")
+            raise ConversionError(f"轉換檢查失敗 {study_path}: {str(e)}") from e
 
     def _find_meta_file(self, nifti_file: Path) -> Optional[Path]:
         """尋找對應的元資料檔案"""
@@ -129,7 +129,7 @@ class NiftiToDicomConverter(BaseConverter):
             self._generate_dicom_files(dicom_headers, nifti_array, output_folder)
 
         except Exception as e:
-            raise ConversionError(f"轉換 NIfTI 到 DICOM 失敗 {nifti_file}: {str(e)}")
+            raise ConversionError(f"轉換 NIfTI 到 DICOM 失敗 {nifti_file}: {str(e)}") from e
 
     def _handle_image_orientation(
         self, nifti_obj: nib.Nifti1Image, nifti_array: np.ndarray
@@ -151,7 +151,7 @@ class NiftiToDicomConverter(BaseConverter):
             return nifti_array
 
         except Exception as e:
-            raise ConversionError(f"影像方向處理失敗: {str(e)}")
+            raise ConversionError(f"影像方向處理失敗: {str(e)}") from e
 
     def _load_dicom_headers(
         self, meta_file: Path, expected_slices: int
@@ -192,7 +192,7 @@ class NiftiToDicomConverter(BaseConverter):
             return self._sort_dicom_headers(dicom_headers)
 
         except Exception as e:
-            raise ConversionError(f"載入 DICOM 標頭失敗: {str(e)}")
+            raise ConversionError(f"載入 DICOM 標頭失敗: {str(e)}") from e
 
     def _sort_dicom_headers(self, headers: list[Dataset]) -> list[Dataset]:
         """排序 DICOM 標頭"""
@@ -226,7 +226,7 @@ class NiftiToDicomConverter(BaseConverter):
                 header.save_as(str(output_file))
 
         except Exception as e:
-            raise ConversionError(f"生成 DICOM 檔案失敗: {str(e)}")
+            raise ConversionError(f"生成 DICOM 檔案失敗: {str(e)}") from e
 
     @classmethod
     def _compute_orientation(cls, init_axcodes: tuple, final_axcodes: tuple) -> tuple:

@@ -63,7 +63,7 @@ def generate_study_report(
         return pivot_df
 
     except Exception as e:
-        raise FileOperationError(f"生成檢查報告失敗: {str(e)}")
+        raise FileOperationError(f"生成檢查報告失敗: {str(e)}") from e
 
 
 def generate_series_report(
@@ -116,7 +116,7 @@ def generate_series_report(
         return df
 
     except Exception as e:
-        raise FileOperationError(f"生成序列報告失敗: {str(e)}")
+        raise FileOperationError(f"生成序列報告失敗: {str(e)}") from e
 
 
 def generate_nifti_report(
@@ -165,7 +165,7 @@ def generate_nifti_report(
         return pivot_df
 
     except Exception as e:
-        raise FileOperationError(f"生成 NIfTI 報告失敗: {str(e)}")
+        raise FileOperationError(f"生成 NIfTI 報告失敗: {str(e)}") from e
 
 
 def create_processing_summary(
@@ -191,4 +191,4 @@ def create_processing_summary(
             f.write(orjson.dumps(summary, option=orjson.OPT_INDENT_2).decode())
 
     except Exception as e:
-        raise FileOperationError(f"建立處理摘要失敗: {str(e)}")
+        raise FileOperationError(f"建立處理摘要失敗: {str(e)}") from e

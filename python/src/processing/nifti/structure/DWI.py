@@ -23,7 +23,7 @@ class DwiNiftiProcessingStrategy(NiftiProcessingStrategy):
             self.delete_small_files(study_path)
             self._rename_dwi_files(study_path)
         except Exception as e:
-            raise ProcessingError(f"DWI NIfTI 處理失敗: {str(e)}")
+            raise ProcessingError(f"DWI NIfTI 處理失敗: {str(e)}") from e
 
     def _rename_dwi_files(self, study_path: Path) -> None:
         """重新命名 DWI 檔案"""

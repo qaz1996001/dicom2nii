@@ -112,4 +112,4 @@ class ESWANProcessingStrategy(MRRenameSeriesProcessingStrategy):
         except Exception as e:
             raise ProcessingError(
                 f"eSWAN 處理失敗: {str(e)}", processing_stage="eswan_processing"
-            )
+            ) from e

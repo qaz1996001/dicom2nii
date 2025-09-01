@@ -134,7 +134,7 @@ class DwiProcessingStrategy(MRRenameSeriesProcessingStrategy):
         except Exception as e:
             raise ProcessingError(
                 f"DWI 處理失敗: {str(e)}", details={"dicom_ds": dicom_ds}
-            )
+            ) from e
 
     def _process_2d_type(
         self, dicom_ds: DicomDataset

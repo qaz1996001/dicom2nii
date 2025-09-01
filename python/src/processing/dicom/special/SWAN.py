@@ -168,7 +168,7 @@ class SWANProcessingStrategy(MRRenameSeriesProcessingStrategy):
         except Exception as e:
             raise ProcessingError(
                 f"SWAN 處理失敗: {str(e)}", details={"dicom_ds": dicom_ds}
-            )
+            ) from e
 
     def _process_type(
         self, dicom_ds: DicomDataset, series_mapping: dict, rename_dict: dict

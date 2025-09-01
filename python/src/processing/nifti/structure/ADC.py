@@ -27,7 +27,7 @@ class ADCNiftiProcessingStrategy(NiftiProcessingStrategy):
             self._update_adc_headers(study_path)
             self._rename_adc_files(study_path)
         except Exception as e:
-            raise ProcessingError(f"ADC NIfTI 處理失敗: {str(e)}")
+            raise ProcessingError(f"ADC NIfTI 處理失敗: {str(e)}") from e
 
     def _update_adc_headers(self, study_path: Path) -> None:
         """更新 ADC 檔案的標頭資訊"""

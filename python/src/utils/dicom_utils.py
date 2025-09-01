@@ -68,7 +68,7 @@ def extract_dicom_info(dicom_ds: DicomDataset) -> dict[str, Any]:
             "modality": modality.value if modality else None,
         }
     except Exception as e:
-        raise ValidationError(f"提取 DICOM 資訊失敗: {str(e)}")
+        raise ValidationError(f"提取 DICOM 資訊失敗: {str(e)}") from e
 
 
 def validate_dicom_tags(
@@ -146,7 +146,7 @@ def clean_dicom_dataset(
         return cleaned_ds
 
     except Exception as e:
-        raise ValidationError(f"清理 DICOM 資料集失敗: {str(e)}")
+        raise ValidationError(f"清理 DICOM 資料集失敗: {str(e)}") from e
 
 
 def parse_study_folder_name(folder_name: str) -> Optional[dict[str, str]]:

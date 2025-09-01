@@ -74,7 +74,7 @@ class MRABrainProcessingStrategy(MRRenameSeriesProcessingStrategy):
         except Exception as e:
             raise ProcessingError(
                 f"MRA Brain 處理失敗: {str(e)}", processing_stage="mra_brain_processing"
-            )
+            ) from e
 
 
 class MRANeckProcessingStrategy(MRRenameSeriesProcessingStrategy):
@@ -125,7 +125,7 @@ class MRANeckProcessingStrategy(MRRenameSeriesProcessingStrategy):
         except Exception as e:
             raise ProcessingError(
                 f"MRA Neck 處理失敗: {str(e)}", processing_stage="mra_neck_processing"
-            )
+            ) from e
 
 
 class MRAVRBrainProcessingStrategy(MRRenameSeriesProcessingStrategy):
@@ -172,7 +172,7 @@ class MRAVRBrainProcessingStrategy(MRRenameSeriesProcessingStrategy):
             raise ProcessingError(
                 f"MRA VR Brain 處理失敗: {str(e)}",
                 processing_stage="mravr_brain_processing",
-            )
+            ) from e
 
 
 class MRAVRNeckProcessingStrategy(MRRenameSeriesProcessingStrategy):
@@ -219,4 +219,4 @@ class MRAVRNeckProcessingStrategy(MRRenameSeriesProcessingStrategy):
             raise ProcessingError(
                 f"MRA VR Neck 處理失敗: {str(e)}",
                 processing_stage="mravr_neck_processing",
-            )
+            ) from e

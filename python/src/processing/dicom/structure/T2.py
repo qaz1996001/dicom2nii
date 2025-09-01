@@ -347,7 +347,7 @@ class T2ProcessingStrategy(MRRenameSeriesProcessingStrategy):
                 f"T2 處理失敗: {str(e)}",
                 processing_stage="t2_processing",
                 details={"dicom_ds": str(dicom_ds)},
-            )
+            ) from e
 
     def _process_type(
         self, dicom_ds: DicomDataset, series_mapping: dict, rename_dict: dict
