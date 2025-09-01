@@ -38,7 +38,9 @@ def safe_file_operation(operation_name: str):
         raise FileOperationError(f"{operation_name} 操作失敗: {str(e)}")
 
 
-def copy_directory_tree(src: PathLike, dst: PathLike, dirs_exist_ok: bool = True) -> None:
+def copy_directory_tree(
+    src: PathLike, dst: PathLike, dirs_exist_ok: bool = True
+) -> None:
     """複製目錄樹"""
     try:
         shutil.copytree(src, dst, dirs_exist_ok=dirs_exist_ok)
@@ -73,7 +75,9 @@ def delete_file(file_path: PathLike, missing_ok: bool = True) -> None:
             raise FileOperationError(f"刪除檔案失敗 {file_path}: {str(e)}")
 
 
-def find_files_by_pattern(directory: PathLike, pattern: str, recursive: bool = True) -> list[Path]:
+def find_files_by_pattern(
+    directory: PathLike, pattern: str, recursive: bool = True
+) -> list[Path]:
     """根據模式尋找檔案"""
     try:
         dir_path = Path(directory)
@@ -85,25 +89,30 @@ def find_files_by_pattern(directory: PathLike, pattern: str, recursive: bool = T
         raise FileOperationError(f"尋找檔案失敗 {directory}/{pattern}: {str(e)}")
 
 
-def get_directory_structure(directory: PathLike, max_depth: Optional[int] = None) -> dict[str, Any]:
+def get_directory_structure(
+    directory: PathLike, max_depth: Optional[int] = None
+) -> dict[str, Any]:
     """獲取目錄結構"""
+
     def _build_structure(path: Path, current_depth: int = 0) -> dict[str, Any]:
         if max_depth is not None and current_depth >= max_depth:
             return {}
 
-        structure = {'type': 'directory', 'children': {}}
+        structure = {"type": "directory", "children": {}}
 
         try:
             for item in path.iterdir():
                 if item.is_file():
-                    structure['children'][item.name] = {
-                        'type': 'file',
-                        'size': item.stat().st_size
+                    structure["children"][item.name] = {
+                        "type": "file",
+                        "size": item.stat().st_size,
                     }
                 elif item.is_dir():
-                    structure['children'][item.name] = _build_structure(item, current_depth + 1)
+                    structure["children"][item.name] = _build_structure(
+                        item, current_depth + 1
+                    )
         except PermissionError:
-            structure['error'] = 'Permission denied'
+            structure["error"] = "Permission denied"
 
         return structure
 

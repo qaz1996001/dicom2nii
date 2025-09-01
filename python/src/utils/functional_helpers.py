@@ -8,13 +8,14 @@ from typing import Any, Callable, Optional, TypeVar, Union
 from ..core.enums import BaseEnum, ImageOrientationEnum, NullEnum
 from ..core.types import DicomDataset
 
-T = TypeVar('T')
-R = TypeVar('R')
+T = TypeVar("T")
+R = TypeVar("R")
 
 
 @dataclass
 class ProcessingRequest:
     """處理請求物件 - 實施 RORO 模式"""
+
     dicom_dataset: DicomDataset
     processing_options: dict[str, Any]
     series_context: dict[str, Any]
@@ -23,6 +24,7 @@ class ProcessingRequest:
 @dataclass
 class ProcessingResult:
     """處理結果物件 - 實施 RORO 模式"""
+
     success: bool
     result_enum: Union[BaseEnum, Any]
     processing_stage: str
@@ -31,8 +33,7 @@ class ProcessingResult:
 
 
 def get_image_orientation_with_reformatted_check(
-    dicom_ds: DicomDataset,
-    orientation_strategy: Any
+    dicom_ds: DicomDataset, orientation_strategy: Any
 ) -> Union[BaseEnum, ImageOrientationEnum]:
     """獲取包含 REFORMATTED 檢查的影像方向 - 純函數實作
 
@@ -51,7 +52,7 @@ def get_image_orientation_with_reformatted_check(
         return image_orientation
 
     # 檢查是否為重新格式化影像
-    is_reformatted = image_type.value[2] == 'REFORMATTED'
+    is_reformatted = image_type.value[2] == "REFORMATTED"
 
     if not is_reformatted:
         return image_orientation
@@ -79,25 +80,29 @@ def extract_series_attributes(dicom_ds: DicomDataset) -> dict[str, Any]:
     image_type = dicom_ds.get((0x08, 0x08))
 
     return {
-        'has_series_description': series_description is not None,
-        'series_description_value': series_description.value if series_description else '',
-        'has_image_type': image_type is not None,
-        'image_type_values': image_type.value if image_type else [],
-        'is_reformatted': (
-            image_type and
-            len(image_type.value) > 2 and
-            image_type.value[2] == 'REFORMATTED'
+        "has_series_description": series_description is not None,
+        "series_description_value": series_description.value
+        if series_description
+        else "",
+        "has_image_type": image_type is not None,
+        "image_type_values": image_type.value if image_type else [],
+        "is_reformatted": (
+            image_type
+            and len(image_type.value) > 2
+            and image_type.value[2] == "REFORMATTED"
         ),
-        'is_original_primary': (
-            image_type and
-            len(image_type.value) >= 2 and
-            'ORIGINAL' in image_type.value and
-            'PRIMARY' in image_type.value
-        )
+        "is_original_primary": (
+            image_type
+            and len(image_type.value) >= 2
+            and "ORIGINAL" in image_type.value
+            and "PRIMARY" in image_type.value
+        ),
     }
 
 
-def match_series_pattern(series_description: str, pattern_mapping: dict[Any, Any]) -> Optional[Any]:
+def match_series_pattern(
+    series_description: str, pattern_mapping: dict[Any, Any]
+) -> Optional[Any]:
     """匹配序列模式 - 純函數
 
     Args:
@@ -118,8 +123,7 @@ def match_series_pattern(series_description: str, pattern_mapping: dict[Any, Any
 
 
 def find_matching_rename_enum(
-    group_results: set,
-    rename_dict: dict[Any, set]
+    group_results: set, rename_dict: dict[Any, set]
 ) -> Optional[Any]:
     """尋找匹配的重新命名枚舉 - 純函數
 
@@ -141,7 +145,7 @@ def process_series_with_type_mapping(
     processing_request: ProcessingRequest,
     series_mapping: dict[Any, Any],
     rename_dict: dict[Any, set],
-    attribute_extractors: list[Callable[[DicomDataset], Any]]
+    attribute_extractors: list[Callable[[DicomDataset], Any]],
 ) -> ProcessingResult:
     """使用類型映射處理序列 - RORO 模式實作
 
@@ -158,19 +162,18 @@ def process_series_with_type_mapping(
     series_attrs = extract_series_attributes(dicom_ds)
 
     # Early Return - 檢查序列描述
-    if not series_attrs['has_series_description']:
+    if not series_attrs["has_series_description"]:
         return ProcessingResult(
             success=False,
             result_enum=NullEnum.NULL,
             processing_stage="series_description_check",
             details=series_attrs,
-            errors=["序列描述缺失"]
+            errors=["序列描述缺失"],
         )
 
     # 匹配序列模式
     matched_series = match_series_pattern(
-        series_attrs['series_description_value'],
-        series_mapping
+        series_attrs["series_description_value"], series_mapping
     )
 
     if not matched_series:
@@ -179,7 +182,7 @@ def process_series_with_type_mapping(
             result_enum=NullEnum.NULL,
             processing_stage="pattern_matching",
             details=series_attrs,
-            errors=["無匹配的序列模式"]
+            errors=["無匹配的序列模式"],
         )
 
     # 提取所有屬性
@@ -196,7 +199,7 @@ def process_series_with_type_mapping(
                 result_enum=NullEnum.NULL,
                 processing_stage="attribute_extraction",
                 details={"extractor": extractor.__name__, "error": str(e)},
-                errors=[f"屬性提取失敗: {str(e)}"]
+                errors=[f"屬性提取失敗: {str(e)}"],
             )
 
     # 尋找匹配的重新命名
@@ -208,11 +211,11 @@ def process_series_with_type_mapping(
             result_enum=rename_enum,
             processing_stage="completed",
             details={
-                'matched_series': str(matched_series),
-                'group_results': [str(r) for r in group_results],
-                'series_attributes': series_attrs
+                "matched_series": str(matched_series),
+                "group_results": [str(r) for r in group_results],
+                "series_attributes": series_attrs,
             },
-            errors=[]
+            errors=[],
         )
 
     return ProcessingResult(
@@ -220,17 +223,15 @@ def process_series_with_type_mapping(
         result_enum=NullEnum.NULL,
         processing_stage="rename_matching",
         details={
-            'matched_series': str(matched_series),
-            'group_results': [str(r) for r in group_results]
+            "matched_series": str(matched_series),
+            "group_results": [str(r) for r in group_results],
         },
-        errors=["無匹配的重新命名規則"]
+        errors=["無匹配的重新命名規則"],
     )
 
 
 def create_attribute_extractor_list(
-    image_orientation_fn: Callable,
-    contrast_fn: Callable,
-    series_type_fn: Callable
+    image_orientation_fn: Callable, contrast_fn: Callable, series_type_fn: Callable
 ) -> list[Callable]:
     """建立屬性提取器列表 - 函數式組合
 
@@ -242,8 +243,4 @@ def create_attribute_extractor_list(
     Returns:
         屬性提取器函數列表
     """
-    return [
-        image_orientation_fn,
-        contrast_fn,
-        series_type_fn
-    ]
+    return [image_orientation_fn, contrast_fn, series_type_fn]
