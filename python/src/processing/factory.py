@@ -1,20 +1,12 @@
 """
 處理策略工廠模式實作
 """
-
+from typing import Dict, Type, List
 from ..core.enums import ModalityEnum
 from ..core.exceptions import ProcessingError
 from .base import BaseProcessingStrategy, MRRenameSeriesProcessingStrategy
-from .dicom.additional_strategies import (
-    CVRProcessingStrategy,
-    DTIProcessingStrategy,
-    MRABrainProcessingStrategy,
-    MRANeckProcessingStrategy,
-    MRAVRBrainProcessingStrategy,
-    MRAVRNeckProcessingStrategy,
-    RestingProcessingStrategy,
-)
-from .dicom.strategies import (
+
+from .dicom import (
     ADCProcessingStrategy,
     ASLProcessingStrategy,
     DSCProcessingStrategy,
@@ -24,6 +16,13 @@ from .dicom.strategies import (
     SWANProcessingStrategy,
     T1ProcessingStrategy,
     T2ProcessingStrategy,
+    CVRProcessingStrategy,
+    DTIProcessingStrategy,
+    MRABrainProcessingStrategy,
+    MRANeckProcessingStrategy,
+    MRAVRBrainProcessingStrategy,
+    MRAVRNeckProcessingStrategy,
+    RestingProcessingStrategy,
 )
 
 
@@ -31,7 +30,7 @@ class ProcessingStrategyFactory:
     """處理策略工廠類別"""
 
     # MR 處理策略註冊表 - 完整的 16 個策略
-    _mr_strategy_registry: dict[str, type[MRRenameSeriesProcessingStrategy]] = {
+    _mr_strategy_registry: Dict[str, Type[MRRenameSeriesProcessingStrategy]] = {
         "DWI": DwiProcessingStrategy,
         "ADC": ADCProcessingStrategy,
         "eADC": EADCProcessingStrategy,
@@ -51,11 +50,11 @@ class ProcessingStrategyFactory:
     }
 
     # 策略實例快取
-    _strategy_cache: dict[str, BaseProcessingStrategy] = {}
+    _strategy_cache: Dict[str, BaseProcessingStrategy] = {}
 
     @classmethod
     def register_strategy(
-        cls, name: str, strategy_class: type[BaseProcessingStrategy]
+        cls, name: str, strategy_class: Type[BaseProcessingStrategy]
     ) -> None:
         """註冊新的處理策略
 
@@ -100,7 +99,7 @@ class ProcessingStrategyFactory:
         return strategy_instance
 
     @classmethod
-    def create_all_mr_strategies(cls) -> list[MRRenameSeriesProcessingStrategy]:
+    def create_all_mr_strategies(cls) -> List[MRRenameSeriesProcessingStrategy]:
         """建立所有 MR 處理策略實例
 
         Returns:
@@ -121,7 +120,7 @@ class ProcessingStrategyFactory:
     @classmethod
     def get_strategies_for_modality(
         cls, modality: ModalityEnum
-    ) -> list[BaseProcessingStrategy]:
+    ) -> List[BaseProcessingStrategy]:
         """根據模態獲取相應的處理策略
 
         Args:
@@ -141,7 +140,7 @@ class ProcessingStrategyFactory:
         return strategies
 
     @classmethod
-    def get_available_strategies(cls) -> list[str]:
+    def get_available_strategies(cls) -> List[str]:
         """獲取所有可用的策略名稱
 
         Returns:
@@ -158,7 +157,7 @@ class ProcessingStrategyFactory:
 class NiftiProcessingStrategyFactory:
     """NIfTI 處理策略工廠"""
 
-    from ..processing.nifti.strategies import (
+    from ..processing.nifti import (
         ADCNiftiProcessingStrategy,
         DwiNiftiProcessingStrategy,
         SWANNiftiProcessingStrategy,
@@ -166,7 +165,7 @@ class NiftiProcessingStrategyFactory:
         T2NiftiProcessingStrategy,
     )
 
-    _strategy_registry: dict[str, type] = {
+    _strategy_registry: Dict[str, type] = {
         "DWI": DwiNiftiProcessingStrategy,
         "ADC": ADCNiftiProcessingStrategy,
         "SWAN": SWANNiftiProcessingStrategy,
@@ -174,10 +173,10 @@ class NiftiProcessingStrategyFactory:
         "T2": T2NiftiProcessingStrategy,
     }
 
-    _strategy_cache: dict[str, BaseProcessingStrategy] = {}
+    _strategy_cache: Dict[str, BaseProcessingStrategy] = {}
 
     @classmethod
-    def create_all_strategies(cls) -> list:
+    def create_all_strategies(cls) -> List:
         """建立所有 NIfTI 處理策略"""
         strategies = []
 
