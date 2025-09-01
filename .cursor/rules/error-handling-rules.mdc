@@ -1,14 +1,82 @@
+### 2. error-handling-rules.mdc
+```yaml
 ---
-description: Guidelines for handling errors and edge cases in Python and FastAPI applications.
-globs: **/*.py
+description: Comprehensive error handling patterns for Python and FastAPI applications, focusing on graceful degradation and user experience
+globs: "**/*.py"
+priority: critical
+category: error-handling
+alwaysApply: true
 ---
-- Prioritize error handling and edge cases:
-  - Handle errors and edge cases at the beginning of functions.
-  - Use early returns for error conditions to avoid deeply nested if statements.
-  - Place the happy path last in the function for improved readability.
-  - Avoid unnecessary else statements; use the if-return pattern instead.
-  - Use guard clauses to handle preconditions and invalid states early.
-  - Implement proper error logging and user-friendly error messages.
-  - Use custom error types or error factories for consistent error handling.
-- Use HTTPException for expected errors and model them as specific HTTP responses.
-- Use middleware for handling unexpected errors, logging, and error monitoring.
+
+# Error Handling Guidelines
+
+## Core Philosophy
+- **Fail Fast**: Detect errors early and handle them explicitly
+- **User-Friendly**: Provide meaningful error messages for end users
+- **Observability**: Log errors appropriately for debugging and monitoring
+
+## Error Handling Patterns
+
+### 1. Guard Clauses and Early Returns
+```python
+# ✅ Correct: Early return pattern
+async def process_user_data(user_data: dict) -> ProcessedData:
+    if not user_data:
+        raise ValueError("User data cannot be empty")
+    
+    if not user_data.get("email"):
+        raise ValueError("Email is required")
+    
+    if not is_valid_email(user_data["email"]):
+        raise ValueError("Invalid email format")
+    
+    # Happy path continues here
+    return await process_validated_data(user_data)
+
+# ✅ Correct: Custom error hierarchy
+class UserServiceError(Exception):
+    """Base exception for user service operations"""
+    pass
+
+class UserNotFoundError(UserServiceError):
+    """Raised when user cannot be found"""
+    def __init__(self, user_id: int):
+        self.user_id = user_id
+        super().__init__(f"User {user_id} not found")
+
+# ✅ Correct: FastAPI error responses
+from fastapi import HTTPException, status
+
+async def get_user(user_id: int) -> User:
+    try:
+        user = await user_service.get_by_id(user_id)
+    except UserNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with ID {user_id} not found"
+        )
+    except DatabaseConnectionError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database service temporarily unavailable"
+        )
+
+    return user
+
+# ✅ Correct: Structured logging
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)
+
+def log_error(error: Exception, context: dict = None):
+    logger.error(
+        "Operation failed",
+        extra={
+            "error_type": type(error).__name__,
+            "error_message": str(error),
+            "traceback": traceback.format_exc(),
+            "context": context or {}
+        }
+    )
+```

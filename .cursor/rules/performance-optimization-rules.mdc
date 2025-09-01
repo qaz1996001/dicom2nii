@@ -1,12 +1,86 @@
+### 5. performance-optimization-rules.mdc  
+```yaml
 ---
-description: Rules for optimizing performance in FastAPI applications, including asynchronous operations and caching.
-globs: **/*.py
+description: Performance optimization strategies for FastAPI applications including async operations, caching, and resource management
+globs: "**/*.py"
+priority: high
+category: performance
+dependencies: ["database-interaction-rules.mdc"]
 ---
-- Minimize blocking I/O operations; use asynchronous operations for all database calls and external API requests.
-- Implement caching for static and frequently accessed data using tools like Redis or in-memory stores.
-- Optimize data serialization and deserialization with Pydantic.
-- Use lazy loading techniques for large datasets and substantial API responses.
-- Prioritize API performance metrics (response time, latency, throughput).
-- Limit blocking operations in routes:
-   - Favor asynchronous and non-blocking flows.
-   - Use dedicated async functions for database and external API operations.
+
+# Performance Optimization Guidelines
+
+## Async-First Architecture
+- **Non-blocking I/O**: Use async/await for all I/O operations
+- **Concurrent Processing**: Leverage asyncio for parallel task execution
+- **Resource Pooling**: Implement connection and thread pools
+
+## Caching Strategies
+
+### Redis Caching Implementation
+```python
+# ✅ Correct: Redis caching with proper error handling
+import redis.asyncio as redis
+from functools import wraps
+
+redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+
+def cache_result(ttl: int = 300):
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            cache_key = f"{func.__name__}:{hash(str(args) + str(kwargs))}"
+            
+            try:
+                cached = await redis_client.get(cache_key)
+                if cached:
+                    return json.loads(cached)
+            except redis.RedisError:
+                # Fallback to function execution if Redis is unavailable
+                pass
+            
+            result = await func(*args, **kwargs)
+            
+            try:
+                await redis_client.setex(
+                    cache_key, 
+                    ttl, 
+                    json.dumps(result, default=str)
+                )
+            except redis.RedisError:
+                pass  # Continue without caching
+            
+            return result
+        return wrapper
+    return decorator
+
+# ✅ Correct: Lazy loading with async generators
+async def get_users_paginated(
+    page: int = 1,
+    limit: int = 100
+) -> AsyncGenerator[UserData, None]:
+    offset = (page - 1) * limit
+
+    async with get_db_connection() as conn:
+        async with conn.transaction():
+            async for record in conn.cursor(
+                "SELECT * FROM users OFFSET $1 LIMIT $2",
+                offset, limit
+            ):
+                yield UserData.from_record(record)
+
+# ✅ Correct: Streaming responses for large datasets
+from fastapi.responses import StreamingResponse
+
+@app.get("/users/export")
+async def export_users():
+    async def generate_csv():
+        yield "id,name,email\n"
+        async for user in get_all_users_stream():
+            yield f"{user.id},{user.name},{user.email}\n"
+
+    return StreamingResponse(
+        generate_csv(),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=users.csv"}
+    )

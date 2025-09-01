@@ -1,10 +1,73 @@
+### 4. general-typescript-rule.mdc
+```yaml
 ---
-description: Applies general TypeScript best practices and style guidelines to all TypeScript files in the project.
-globs: **/*.{ts,tsx}
+description: TypeScript best practices covering type safety, modern syntax patterns, and maintainable code structure for all TS/TSX files
+globs: "**/*.{ts,tsx}"
+priority: high
+category: typescript
+alwaysApply: true
 ---
-- You are an expert in TypeScript.
-- TypeScript Usage: Follow TypeScript best practices for type safety and code maintainability.
-- Syntax and Formatting: Adhere to consistent coding style and formatting guidelines for TypeScript.
-- Use TypeScript for all code; prefer interfaces over types.
-- Avoid enums; use maps instead.
-- Use functional components with TypeScript interfaces.
+
+# TypeScript Development Guidelines
+
+## Type Safety First
+- **Strict Mode**: Enable strict TypeScript compiler options
+- **Explicit Types**: Prefer explicit type annotations over inference when clarity is needed
+- **Null Safety**: Handle undefined/null values explicitly
+
+## Modern TypeScript Patterns
+
+### Interface Over Types
+```typescript
+// ✅ Preferred: Interface for object shapes
+interface UserData {
+  id: number;
+  name: string;
+  email: string;
+  createdAt: Date;
+}
+
+// ❌ Avoid: Type aliases for simple objects
+type UserData = {
+  id: number;
+  name: string;
+  email: string;
+  createdAt: Date;
+}
+
+// ✅ Preferred: Const assertions and maps
+const UserRole = {
+  ADMIN: 'admin',
+  USER: 'user',
+  GUEST: 'guest'
+} as const;
+
+type UserRoleType = typeof UserRole[keyof typeof UserRole];
+
+// ❌ Avoid: Traditional enums
+enum UserRole {
+  ADMIN = 'admin',
+  USER = 'user',
+  GUEST = 'guest'
+}
+
+// ✅ Preferred: Const assertions and maps
+const UserRole = {
+  ADMIN: 'admin',
+  USER: 'user',
+  GUEST: 'guest'
+} as const;
+
+type UserRoleType = typeof UserRole[keyof typeof UserRole];
+
+// ❌ Avoid: Traditional enums
+enum UserRole {
+  ADMIN = 'admin',
+  USER = 'user',
+  GUEST = 'guest'
+}
+
+// ✅ Leverage TypeScript utility types
+type PartialUser = Partial<UserData>;
+type UserEmail = Pick<UserData, 'email'>;
+type UserWithoutId = Omit<UserData, 'id'>;

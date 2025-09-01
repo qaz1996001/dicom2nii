@@ -1,7 +1,45 @@
 ---
-description: Specific rules for interacting with databases using async libraries within the db directory.
-globs: **/db/*.py
+description: Comprehensive guidelines for database interactions using async libraries, ORM configurations, and connection management within the db directory
+globs: "**/db/*.py"
+priority: high
+category: database
+dependencies: ["performance-optimization-rules.mdc"]
 ---
-- Async database libraries like asyncpg or aiomysql
-- SQLAlchemy 2.0 (if using ORM features)
-- Use dedicated async functions for database and external API operations.
+
+# Database Interaction Rules
+
+## Core Principles
+- **Async First**: Always use async database libraries (asyncpg, aiomysql) for non-blocking I/O operations
+- **Connection Management**: Implement proper connection pooling and lifecycle management
+- **Error Resilience**: Handle database connection failures gracefully with retry mechanisms
+
+## Required Libraries
+- **asyncpg**: For PostgreSQL async connections
+- **aiomysql**: For MySQL async connections
+- **SQLAlchemy 2.0**: When using ORM features with async support
+
+## Implementation Guidelines
+
+### Database Connection Setup
+```python
+# ✅ Correct: Async database setup
+import asyncpg
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def get_db_connection():
+    conn = await asyncpg.connect("postgresql://...")
+    try:
+        yield conn
+    finally:
+        await conn.close()
+
+# ✅ Correct: Async query execution
+async def get_user_by_id(user_id: int) -> dict | None:
+    async with get_db_connection() as conn:
+        result = await conn.fetchrow(
+            "SELECT * FROM users WHERE id = $1",
+            user_id
+        )
+        return dict(result) if result else None
+```

@@ -1,7 +1,118 @@
+### 7. pydantic-model-rules.mdc
+```yaml
 ---
-description: Specific rules for creating Pydantic models, focusing on versioning and usage within the project.
-globs: **/models/*.py
+description: Pydantic v2 model definitions, validation patterns, and serialization best practices for the models directory
+globs: "**/models/*.py"
+priority: high
+category: data-models
+dependencies: ["python-general-principles.mdc"]
 ---
-- Use type hints for all function signatures. Prefer Pydantic models over raw dictionaries for input validation.
-- Use Pydantic v2.
-- Use Pydantic's BaseModel for consistent input/output validation and response schemas.
+
+# Pydantic Model Guidelines
+
+## Pydantic v2 Best Practices
+- **Validation First**: Use Pydantic's built-in validators for data integrity
+- **Type Safety**: Leverage Python type hints for better IDE support
+- **Performance**: Utilize Pydantic v2's improved serialization speed
+
+## Model Definition Patterns
+
+### Base Model Configuration
+```python
+# ✅ Correct: Base model with v2 configuration
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from typing import Optional
+from datetime import datetime
+from enum import Enum
+
+class BaseEntity(BaseModel):
+    """Base model with common configuration."""
+    model_config = ConfigDict(
+        from_attributes=True,  # Enable ORM mode
+        validate_assignment=True,  # Validate on assignment
+        arbitrary_types_allowed=False,  # Strict type checking
+        str_strip_whitespace=True,  # Auto-trim strings
+    )
+
+class TimestampMixin(BaseModel):
+    """Mixin for timestamp fields."""
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: Optional[datetime] = None
+
+# ✅ Correct: Separate models for different use cases
+from typing import List
+
+# Input models
+class UserCreate(BaseModel):
+    """Model for user creation."""
+    name: str = Field(..., min_length=2, max_length=100)
+    email: str = Field(..., pattern=r'^[\w\.-]+@[\w\.-]+\.\w+)
+    age: int = Field(..., ge=13, le=120)
+
+class UserUpdate(BaseModel):
+    """Model for user updates with optional fields."""
+    name: Optional[str] = Field(None, min_length=2, max_length=100)
+    email: Optional[str] = Field(None, pattern=r'^[\w\.-]+@[\w\.-]+\.\w+)
+    age: Optional[int] = Field(None, ge=13, le=120)
+
+# Output models
+class UserResponse(BaseEntity, TimestampMixin):
+    """Model for user API responses."""
+    id: int
+    name: str
+    email: str
+    age: int
+    is_active: bool = True
+
+# Internal models
+class UserInDB(UserResponse):
+    """Model with sensitive fields for internal use."""
+    hashed_password: str
+
+
+# ✅ Correct: Custom validation with v2 syntax
+from pydantic import field_validator, model_validator
+
+class UserProfile(BaseModel):
+    username: str
+    email: str
+    confirm_email: str
+
+    @field_validator('username')
+    @classmethod
+    def validate_username(cls, v: str) -> str:
+        if not v.isalnum():
+            raise ValueError('Username must contain only letters and numbers')
+        return v.lower()
+
+    @model_validator(mode='after')
+    def validate_emails_match(self):
+        if self.email != self.confirm_email:
+            raise ValueError('Email addresses must match')
+        return self
+
+# ✅ Correct: Response serialization with computed fields
+from pydantic import computed_field
+
+class UserPublic(BaseModel):
+    id: int
+    username: str
+    created_at: datetime
+
+    @computed_field
+    @property
+    def display_name(self) -> str:
+        """Generate display name from username."""
+        return self.username.title()
+
+    @computed_field
+    @property
+    def member_since(self) -> str:
+        """Human-readable membership duration."""
+        days = (datetime.utcnow() - self.created_at).days
+        if days < 30:
+            return f"{days} days ago"
+        elif days < 365:
+            return f"{days // 30} months ago"
+        else:
+            return f"{days // 365} years ago"

@@ -1,9 +1,72 @@
+### 3. fastapi-application-rules.mdc
+```yaml
 ---
-description: Specific guidelines for FastAPI application structure and setup in the main application file.
-globs: **/main.py
+description: FastAPI application architecture, middleware configuration, and lifecycle management for main.py files
+globs: "**/main.py"
+priority: high
+category: application-setup
+dependencies: ["error-handling-rules.mdc", "performance-optimization-rules.mdc"]
 ---
-- Use functional components (plain functions) and Pydantic models for input validation and response schemas.
-- Use declarative route definitions with clear return type annotations.
-- Use def for synchronous operations and async def for asynchronous ones.
-- Minimize @app.on_event("startup") and @app.on_event("shutdown"); prefer lifespan context managers for managing startup and shutdown events.
-- Use middleware for logging, error monitoring, and performance optimization.
+
+# FastAPI Application Rules
+
+## Application Architecture
+- **Modular Design**: Separate concerns using routers, middleware, and dependencies
+- **Lifecycle Management**: Use lifespan context managers for startup/shutdown logic
+- **Configuration**: Centralize app configuration and environment variables
+
+## Application Setup Pattern
+```python
+# ✅ Correct: FastAPI application structure
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from .routers import users, auth
+from .core.database import init_db, close_db
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await init_db()
+    yield
+    # Shutdown  
+    await close_db()
+
+app = FastAPI(
+    title="My API",
+    description="API with proper lifecycle management",
+    lifespan=lifespan
+)
+
+# Middleware configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Router registration
+app.include_router(users.router, prefix="/api/v1")
+app.include_router(auth.router, prefix="/api/v1")
+
+# ✅ Correct: Clear route definitions with type annotations
+from pydantic import BaseModel
+
+class UserCreate(BaseModel):
+    name: str
+    email: str
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+
+@app.post("/users/", response_model=UserResponse)
+async def create_user(user: UserCreate) -> UserResponse:
+    """Create a new user with validated input."""
+    # Implementation here
+    pass
+```

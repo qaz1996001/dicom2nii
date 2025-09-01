@@ -1,11 +1,154 @@
+### 8. python-general-principles.mdc
+```yaml
 ---
-description: General Python coding principles for all Python files, focusing on code style and best practices.
-globs: **/*.py
+description: Fundamental Python coding standards, naming conventions, and architectural patterns for all Python files in the project
+globs: "**/*.py"
+priority: critical
+category: python-fundamentals
+alwaysApply: true
 ---
-- Write concise, technical responses with accurate Python examples.
-- Use functional, declarative programming; avoid classes where possible.
-- Prefer iteration and modularization over code duplication.
-- Use descriptive variable names with auxiliary verbs (e.g., is_active, has_permission).
-- Use lowercase with underscores for directories and files (e.g., routers/user_routes.py).
-- Favor named exports for routes and utility functions.
-- Use the Receive an Object, Return an Object (RORO) pattern.
+
+# Python Development Principles
+
+## Code Philosophy
+- **Readability Counts**: Code is read more often than written
+- **Explicit is Better**: Avoid implicit assumptions and magic
+- **DRY (Don't Repeat Yourself)**: Eliminate code duplication through modularization
+
+## Naming Conventions
+
+### Variables and Functions
+```python
+# ✅ Correct: Descriptive names with auxiliary verbs
+is_authenticated = check_user_credentials(token)
+has_permission = verify_access_rights(user, resource)
+user_count = get_active_user_count()
+
+# ❌ Avoid: Vague or abbreviated names
+auth = check(t)
+perm = verify(u, r)
+cnt = get_count()
+
+# ✅ Correct: Snake_case for files and directories
+project/
+│
+├─ .cursor
+│   ├──  ...
+│
+├─ javascript
+│   ├──   ...
+├─ python
+│  ├── user_management/
+│  │    ├── user_service.py
+│  │    ├── user_repository.py
+│  │    └── user_models.py
+│  ├─── authentication/
+│  │    ├── auth_middleware.py
+│  │    └── token_validator.py
+│  └─── utils/
+│       ├── string_helpers.py
+│       └── date_utilities.py
+│
+├─ .gitignore
+
+
+# ✅ Correct: Single responsibility functions
+def calculate_user_score(user_activities: List[Activity]) -> float:
+    """Calculate user engagement score based on activities."""
+    if not user_activities:
+        return 0.0
+
+    total_score = sum(activity.points for activity in user_activities)
+    return total_score / len(user_activities)
+
+def format_score_display(score: float) -> str:
+    """Format score for user display."""
+    return f"{score:.1f} points"
+
+def get_user_engagement_summary(user: User) -> str:
+    """Get formatted user engagement summary."""
+    activities = get_user_activities(user.id)
+    score = calculate_user_score(activities)
+    return format_score_display(score)
+
+# ✅ Correct: RORO pattern implementation
+from dataclasses import dataclass
+from typing import Dict, Any
+
+@dataclass
+class ProcessingRequest:
+    data: Dict[str, Any]
+    options: Dict[str, Any]
+    user_id: int
+
+@dataclass
+class ProcessingResult:
+    success: bool
+    result_data: Dict[str, Any]
+    errors: List[str]
+    processing_time: float
+
+def process_user_data(request: ProcessingRequest) -> ProcessingResult:
+    """Process user data using RORO pattern."""
+    start_time = time.time()
+    errors = []
+
+    try:
+        # Processing logic here
+        processed_data = transform_data(request.data, request.options)
+
+        return ProcessingResult(
+            success=True,
+            result_data=processed_data,
+            errors=[],
+            processing_time=time.time() - start_time
+        )
+    except Exception as e:
+        return ProcessingResult(
+            success=False,
+            result_data={},
+            errors=[str(e)],
+            processing_time=time.time() - start_time
+        )
+
+ # ✅ Correct: Named exports for utilities
+# In utils/validation_helpers.py
+def is_valid_email(email: str) -> bool:
+    """Validate email format using regex."""
+    import re
+    pattern = r'^[\w\.-]+@[\w\.-]+\.\w+
+    return bool(re.match(pattern, email))
+
+def is_strong_password(password: str) -> bool:
+    """Check if password meets security requirements."""
+    return (
+        len(password) >= 8 and
+        any(c.isupper() for c in password) and
+        any(c.islower() for c in password) and
+        any(c.isdigit() for c in password)
+    )
+
+# Named export
+__all__ = ['is_valid_email', 'is_strong_password']
+
+# ✅ Correct: Generic function to avoid duplication
+def validate_required_fields(data: Dict[str, Any], required_fields: List[str]) -> List[str]:
+    """Validate that all required fields are present and non-empty."""
+    missing_fields = []
+
+    for field in required_fields:
+        if field not in data or not data[field]:
+            missing_fields.append(field)
+
+    return missing_fields
+
+# Usage
+user_validation_errors = validate_required_fields(
+    user_data,
+    ['name', 'email', 'password']
+)
+
+profile_validation_errors = validate_required_fields(
+    profile_data,
+    ['bio', 'location', 'website']
+)
