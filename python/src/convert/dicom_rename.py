@@ -3,15 +3,11 @@ import os
 import pathlib
 import re
 import shutil
-
 from concurrent.futures import ThreadPoolExecutor
-from typing import Tuple
-
-from pydicom import dcmread, FileDataset
 
 from base import *
 from config import *
-
+from pydicom import FileDataset, dcmread
 
 # 1. Raw Dicom Folder -> Rename Dicom Folder
 # 2. Rename Dicom Folder -> Nifti
@@ -34,8 +30,10 @@ class DwiProcessingStrategy(MRRenameSeriesProcessingStrategy):
         0: MRSeriesRenameEnum.DWI0,
         1000: MRSeriesRenameEnum.DWI1000,
     }
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum]] = (MRAcquisitionTypeEnum.TYPE_2D,)
-    pattern = re.compile('.*(DWI|AUTODIFF).*', re.IGNORECASE)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum]] = (
+        MRAcquisitionTypeEnum.TYPE_2D,
+    )
+    pattern = re.compile(".*(DWI|AUTODIFF).*", re.IGNORECASE)
 
     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         """Process a DICOM dataset for DWI series renaming.
@@ -73,8 +71,10 @@ class DwiProcessingStrategy(MRRenameSeriesProcessingStrategy):
         0: MRSeriesRenameEnum.DWI0,
         1000: MRSeriesRenameEnum.DWI1000,
     }
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum]] = (MRAcquisitionTypeEnum.TYPE_2D,)
-    pattern = re.compile('.*(DWI|AUTODIFF).*', re.IGNORECASE)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum]] = (
+        MRAcquisitionTypeEnum.TYPE_2D,
+    )
+    pattern = re.compile(".*(DWI|AUTODIFF).*", re.IGNORECASE)
 
     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         #  modality == MR
@@ -94,10 +94,14 @@ class DwiProcessingStrategy(MRRenameSeriesProcessingStrategy):
 
 class ADCProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_rename_mapping = {
-        MRSeriesRenameEnum.ADC: re.compile('.*(?<!e)(ADC|Apparent Diffusion Coefficient).*', re.IGNORECASE),
+        MRSeriesRenameEnum.ADC: re.compile(
+            ".*(?<!e)(ADC|Apparent Diffusion Coefficient).*", re.IGNORECASE
+        ),
     }
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_2D,
-                                                                          NullEnum.NULL)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (
+        MRAcquisitionTypeEnum.TYPE_2D,
+        NullEnum.NULL,
+    )
 
     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         # (0008,0008)	Image Type	DERIVED\SECONDARY\COMBINED
@@ -111,7 +115,7 @@ class ADCProcessingStrategy(MRRenameSeriesProcessingStrategy):
         #         image_type_tag[1] == 'SECONDARY' and \
         #         image_type_tag[2] == 'COMBINED' and \
         #         instance_creation_time is not None:
-        if image_type_tag[0] == 'DERIVED' and instance_creation_time is not None:
+        if image_type_tag[0] == "DERIVED" and instance_creation_time is not None:
             for key, pattern in self.series_rename_mapping.items():
                 match_result = pattern.match(series_description.value)
                 if match_result:
@@ -121,10 +125,12 @@ class ADCProcessingStrategy(MRRenameSeriesProcessingStrategy):
 
 class EADCProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_rename_mapping = {
-        MRSeriesRenameEnum.eADC: re.compile('.*(eADC).*', re.IGNORECASE),
+        MRSeriesRenameEnum.eADC: re.compile(".*(eADC).*", re.IGNORECASE),
     }
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_3D,
-                                                                          NullEnum.NULL)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (
+        MRAcquisitionTypeEnum.TYPE_3D,
+        NullEnum.NULL,
+    )
 
     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         series_description = dicom_ds.get((0x08, 0x103E))
@@ -137,9 +143,11 @@ class EADCProcessingStrategy(MRRenameSeriesProcessingStrategy):
 
 class SWANProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_rename_mapping = {
-        MRSeriesRenameEnum.SWAN: re.compile('.*(?<!e)(SWAN).*', re.IGNORECASE),
+        MRSeriesRenameEnum.SWAN: re.compile(".*(?<!e)(SWAN).*", re.IGNORECASE),
     }
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_3D,)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (
+        MRAcquisitionTypeEnum.TYPE_3D,
+    )
 
     series_group_fn_list = []
 
@@ -154,7 +162,7 @@ class SWANProcessingStrategy(MRRenameSeriesProcessingStrategy):
         image_type = dicom_ds.get((0x08, 0x08))
         instance_creation_time = dicom_ds.get((0x08, 0x13))
         if image_type and instance_creation_time is not None:
-            if image_type.value[-1] == 'MIN IP':
+            if image_type.value[-1] == "MIN IP":
                 return SeriesEnum.mIP
         return NullEnum.NULL
 
@@ -169,7 +177,7 @@ class SWANProcessingStrategy(MRRenameSeriesProcessingStrategy):
 
     @classmethod
     def get_swan(cls, dicom_ds: FileDataset):
-        pulse_sequence_name = dicom_ds.get((0x19, 0x109c))
+        pulse_sequence_name = dicom_ds.get((0x19, 0x109C))
         if pulse_sequence_name:
             if str(pulse_sequence_name.value).lower() == SeriesEnum.SWAN.value.lower():
                 return SeriesEnum.SWAN
@@ -196,7 +204,10 @@ class SWANProcessingStrategy(MRRenameSeriesProcessingStrategy):
                             series_group_set.update(item_enum)
                         else:
                             series_group_set.add(item_enum)
-                for series_rename_enum, series_rename_group_set in self.series_rename_dict.items():
+                for (
+                    series_rename_enum,
+                    series_rename_group_set,
+                ) in self.series_rename_dict.items():
                     if series_group_set == series_rename_group_set:
                         return series_rename_enum
         return NullEnum.NULL
@@ -204,9 +215,11 @@ class SWANProcessingStrategy(MRRenameSeriesProcessingStrategy):
 
 class ESWANProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_rename_mapping = {
-        MRSeriesRenameEnum.eSWAN: re.compile('.*(SWAN).*', re.IGNORECASE),
+        MRSeriesRenameEnum.eSWAN: re.compile(".*(SWAN).*", re.IGNORECASE),
     }
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_3D,)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (
+        MRAcquisitionTypeEnum.TYPE_3D,
+    )
     series_group_fn_list = []
 
     series_rename_dict = {
@@ -219,7 +232,7 @@ class ESWANProcessingStrategy(MRRenameSeriesProcessingStrategy):
         image_type = dicom_ds.get((0x08, 0x08))
         instance_creation_time = dicom_ds.get((0x08, 0x13))
         if image_type and instance_creation_time is not None:
-            if image_type.value[-1] == 'MIN IP':
+            if image_type.value[-1] == "MIN IP":
                 return SeriesEnum.mIP
 
         #     MRSeriesRenameEnum.eSWANmag
@@ -227,7 +240,7 @@ class ESWANProcessingStrategy(MRRenameSeriesProcessingStrategy):
 
     @classmethod
     def get_eswan(cls, dicom_ds: FileDataset):
-        pulse_sequence_name = dicom_ds.get((0x19, 0x109c))
+        pulse_sequence_name = dicom_ds.get((0x19, 0x109C))
         if pulse_sequence_name:
             if str(pulse_sequence_name.value).lower() == SeriesEnum.eSWAN.value.lower():
                 return SeriesEnum.eSWAN
@@ -253,7 +266,10 @@ class ESWANProcessingStrategy(MRRenameSeriesProcessingStrategy):
                             series_group_set.update(item_enum)
                         else:
                             series_group_set.add(item_enum)
-                for series_rename_enum, series_rename_group_set in self.series_rename_dict.items():
+                for (
+                    series_rename_enum,
+                    series_rename_group_set,
+                ) in self.series_rename_dict.items():
                     if series_group_set == series_rename_group_set:
                         return series_rename_enum
         return NullEnum.NULL
@@ -261,9 +277,13 @@ class ESWANProcessingStrategy(MRRenameSeriesProcessingStrategy):
 
 class MRABrainProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_rename_mapping = {
-        MRSeriesRenameEnum.MRA_BRAIN: re.compile('.+(TOF)(((?!Neck).)*)$', re.IGNORECASE),
+        MRSeriesRenameEnum.MRA_BRAIN: re.compile(
+            ".+(TOF)(((?!Neck).)*)$", re.IGNORECASE
+        ),
     }
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_3D,)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (
+        MRAcquisitionTypeEnum.TYPE_3D,
+    )
 
     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         #  modality == MR
@@ -273,16 +293,18 @@ class MRABrainProcessingStrategy(MRRenameSeriesProcessingStrategy):
         match_result = pattern.match(series_description.value)
         if match_result:
             image_type_tag = dicom_ds.get((0x08, 0x08))
-            if image_type_tag[0] == 'ORIGINAL':
+            if image_type_tag[0] == "ORIGINAL":
                 return MRSeriesRenameEnum.MRA_BRAIN
         return NullEnum.NULL
 
 
 class MRANeckProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_rename_mapping = {
-        MRSeriesRenameEnum.MRA_NECK: re.compile('.*(TOF).*((Neck+).*)$', re.IGNORECASE),
+        MRSeriesRenameEnum.MRA_NECK: re.compile(".*(TOF).*((Neck+).*)$", re.IGNORECASE),
     }
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_3D,)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (
+        MRAcquisitionTypeEnum.TYPE_3D,
+    )
 
     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         #  modality == MR
@@ -292,16 +314,20 @@ class MRANeckProcessingStrategy(MRRenameSeriesProcessingStrategy):
         match_result = pattern.match(series_description.value)
         if match_result:
             image_type_tag = dicom_ds.get((0x08, 0x08))
-            if image_type_tag[0] == 'ORIGINAL':
+            if image_type_tag[0] == "ORIGINAL":
                 return MRSeriesRenameEnum.MRA_NECK
         return NullEnum.NULL
 
 
 class MRAVRBrainProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_rename_mapping = {
-        MRSeriesRenameEnum.MRAVR_BRAIN: re.compile('((?!TOF|Neck).)*(MRA)((?!Neck).)*$', re.IGNORECASE),
+        MRSeriesRenameEnum.MRAVR_BRAIN: re.compile(
+            "((?!TOF|Neck).)*(MRA)((?!Neck).)*$", re.IGNORECASE
+        ),
     }
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_3D,)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (
+        MRAcquisitionTypeEnum.TYPE_3D,
+    )
 
     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         #  modality == MR
@@ -316,9 +342,13 @@ class MRAVRBrainProcessingStrategy(MRRenameSeriesProcessingStrategy):
 
 class MRAVRNeckProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_rename_mapping = {
-        MRSeriesRenameEnum.MRAVR_NECK: re.compile('((?!TOF).)*(Neck.*MRA)|(MRA.*Neck).*$', re.IGNORECASE),
+        MRSeriesRenameEnum.MRAVR_NECK: re.compile(
+            "((?!TOF).)*(Neck.*MRA)|(MRA.*Neck).*$", re.IGNORECASE
+        ),
     }
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_3D,)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (
+        MRAcquisitionTypeEnum.TYPE_3D,
+    )
 
     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         #  modality == MR
@@ -333,80 +363,184 @@ class MRAVRNeckProcessingStrategy(MRRenameSeriesProcessingStrategy):
 
 class T1ProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_rename_mapping = {
-        T1SeriesRenameEnum.T1: re.compile('.*(T1).*', re.IGNORECASE),
-        SeriesEnum.FLAIR: re.compile('(FLAIR)', re.IGNORECASE),
-        SeriesEnum.CUBE: re.compile('.*(CUBE).*', re.IGNORECASE),
-        SeriesEnum.BRAVO: re.compile('.*(BRAVO).*', re.IGNORECASE),
+        T1SeriesRenameEnum.T1: re.compile(".*(T1).*", re.IGNORECASE),
+        SeriesEnum.FLAIR: re.compile("(FLAIR)", re.IGNORECASE),
+        SeriesEnum.CUBE: re.compile(".*(CUBE).*", re.IGNORECASE),
+        SeriesEnum.BRAVO: re.compile(".*(BRAVO).*", re.IGNORECASE),
     }
     type_3D_series_rename_mapping = series_rename_mapping
 
     type_2D_series_rename_mapping = {
-        T1SeriesRenameEnum.T1: re.compile('.*(T1).*', re.IGNORECASE),
-        SeriesEnum.FLAIR: re.compile('(FLAIR)', re.IGNORECASE),
+        T1SeriesRenameEnum.T1: re.compile(".*(T1).*", re.IGNORECASE),
+        SeriesEnum.FLAIR: re.compile("(FLAIR)", re.IGNORECASE),
     }
 
     type_2D_series_rename_dict = {
-        T1SeriesRenameEnum.T1_AXI: {T1SeriesRenameEnum.T1, ImageOrientationEnum.AXI, ContrastEnum.NE},
-        T1SeriesRenameEnum.T1_SAG: {T1SeriesRenameEnum.T1, ImageOrientationEnum.SAG, ContrastEnum.NE},
-        T1SeriesRenameEnum.T1_COR: {T1SeriesRenameEnum.T1, ImageOrientationEnum.COR, ContrastEnum.NE},
-        T1SeriesRenameEnum.T1CE_AXI: {T1SeriesRenameEnum.T1, ImageOrientationEnum.AXI, ContrastEnum.CE},
-        T1SeriesRenameEnum.T1CE_SAG: {T1SeriesRenameEnum.T1, ImageOrientationEnum.SAG, ContrastEnum.CE},
-        T1SeriesRenameEnum.T1CE_COR: {T1SeriesRenameEnum.T1, ImageOrientationEnum.COR, ContrastEnum.CE},
-
-        T1SeriesRenameEnum.T1FLAIR_AXI: {T1SeriesRenameEnum.T1, SeriesEnum.FLAIR, ImageOrientationEnum.AXI,
-                                         ContrastEnum.NE},
-        T1SeriesRenameEnum.T1FLAIR_SAG: {T1SeriesRenameEnum.T1, SeriesEnum.FLAIR, ImageOrientationEnum.SAG,
-                                         ContrastEnum.NE},
-        T1SeriesRenameEnum.T1FLAIR_COR: {T1SeriesRenameEnum.T1, SeriesEnum.FLAIR, ImageOrientationEnum.COR,
-                                         ContrastEnum.NE},
-        T1SeriesRenameEnum.T1FLAIRCE_AXI: {T1SeriesRenameEnum.T1, SeriesEnum.FLAIR, ImageOrientationEnum.AXI,
-                                           ContrastEnum.CE},
-        T1SeriesRenameEnum.T1FLAIRCE_SAG: {T1SeriesRenameEnum.T1, SeriesEnum.FLAIR, ImageOrientationEnum.SAG,
-                                           ContrastEnum.CE},
-        T1SeriesRenameEnum.T1FLAIRCE_COR: {T1SeriesRenameEnum.T1, SeriesEnum.FLAIR, ImageOrientationEnum.COR,
-                                           ContrastEnum.CE},
+        T1SeriesRenameEnum.T1_AXI: {
+            T1SeriesRenameEnum.T1,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.NE,
+        },
+        T1SeriesRenameEnum.T1_SAG: {
+            T1SeriesRenameEnum.T1,
+            ImageOrientationEnum.SAG,
+            ContrastEnum.NE,
+        },
+        T1SeriesRenameEnum.T1_COR: {
+            T1SeriesRenameEnum.T1,
+            ImageOrientationEnum.COR,
+            ContrastEnum.NE,
+        },
+        T1SeriesRenameEnum.T1CE_AXI: {
+            T1SeriesRenameEnum.T1,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.CE,
+        },
+        T1SeriesRenameEnum.T1CE_SAG: {
+            T1SeriesRenameEnum.T1,
+            ImageOrientationEnum.SAG,
+            ContrastEnum.CE,
+        },
+        T1SeriesRenameEnum.T1CE_COR: {
+            T1SeriesRenameEnum.T1,
+            ImageOrientationEnum.COR,
+            ContrastEnum.CE,
+        },
+        T1SeriesRenameEnum.T1FLAIR_AXI: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.FLAIR,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.NE,
+        },
+        T1SeriesRenameEnum.T1FLAIR_SAG: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.FLAIR,
+            ImageOrientationEnum.SAG,
+            ContrastEnum.NE,
+        },
+        T1SeriesRenameEnum.T1FLAIR_COR: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.FLAIR,
+            ImageOrientationEnum.COR,
+            ContrastEnum.NE,
+        },
+        T1SeriesRenameEnum.T1FLAIRCE_AXI: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.FLAIR,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.CE,
+        },
+        T1SeriesRenameEnum.T1FLAIRCE_SAG: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.FLAIR,
+            ImageOrientationEnum.SAG,
+            ContrastEnum.CE,
+        },
+        T1SeriesRenameEnum.T1FLAIRCE_COR: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.FLAIR,
+            ImageOrientationEnum.COR,
+            ContrastEnum.CE,
+        },
     }
 
     type_3D_series_rename_dict = {
-        T1SeriesRenameEnum.T1CUBE_AXI: {T1SeriesRenameEnum.T1, SeriesEnum.CUBE, ImageOrientationEnum.AXI,
-                                        ContrastEnum.NE},
-        T1SeriesRenameEnum.T1CUBE_SAG: {T1SeriesRenameEnum.T1, SeriesEnum.CUBE, ImageOrientationEnum.SAG,
-                                        ContrastEnum.NE},
-        T1SeriesRenameEnum.T1CUBE_COR: {T1SeriesRenameEnum.T1, SeriesEnum.CUBE, ImageOrientationEnum.COR,
-                                        ContrastEnum.NE},
-        T1SeriesRenameEnum.T1CUBECE_AXI: {T1SeriesRenameEnum.T1, SeriesEnum.CUBE, ImageOrientationEnum.AXI,
-                                          ContrastEnum.CE},
-        T1SeriesRenameEnum.T1CUBECE_SAG: {T1SeriesRenameEnum.T1, SeriesEnum.CUBE, ImageOrientationEnum.SAG,
-                                          ContrastEnum.CE},
-        T1SeriesRenameEnum.T1CUBECE_COR: {T1SeriesRenameEnum.T1, SeriesEnum.CUBE, ImageOrientationEnum.COR,
-                                          ContrastEnum.CE},
-        T1SeriesRenameEnum.T1FLAIRCUBE_AXI: {T1SeriesRenameEnum.T1, SeriesEnum.FLAIR, SeriesEnum.CUBE,
-                                             ImageOrientationEnum.AXI,
-                                             ContrastEnum.NE},
-        T1SeriesRenameEnum.T1FLAIRCUBE_SAG: {T1SeriesRenameEnum.T1, SeriesEnum.FLAIR, SeriesEnum.CUBE,
-                                             ImageOrientationEnum.SAG,
-                                             ContrastEnum.NE},
-        T1SeriesRenameEnum.T1FLAIRCUBE_COR: {T1SeriesRenameEnum.T1, SeriesEnum.FLAIR, SeriesEnum.CUBE,
-                                             ImageOrientationEnum.COR,
-                                             ContrastEnum.NE},
-        T1SeriesRenameEnum.T1FLAIRCUBECE_AXI: {T1SeriesRenameEnum.T1, SeriesEnum.FLAIR, SeriesEnum.CUBE,
-                                               ImageOrientationEnum.AXI,
-                                               ContrastEnum.CE},
-        T1SeriesRenameEnum.T1FLAIRCUBECE_SAG: {T1SeriesRenameEnum.T1, SeriesEnum.FLAIR, SeriesEnum.CUBE,
-                                               ImageOrientationEnum.SAG,
-                                               ContrastEnum.CE},
-        T1SeriesRenameEnum.T1FLAIRCUBECE_COR: {T1SeriesRenameEnum.T1, SeriesEnum.FLAIR, SeriesEnum.CUBE,
-                                               ImageOrientationEnum.COR,
-                                               ContrastEnum.CE},
-        T1SeriesRenameEnum.T1BRAVO_AXI: {T1SeriesRenameEnum.T1, SeriesEnum.BRAVO, ImageOrientationEnum.AXI,
-                                         ContrastEnum.NE},
-        T1SeriesRenameEnum.T1BRAVOCE_AXI: {T1SeriesRenameEnum.T1, SeriesEnum.BRAVO, ImageOrientationEnum.AXI,
-                                           ContrastEnum.CE},
+        T1SeriesRenameEnum.T1CUBE_AXI: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.NE,
+        },
+        T1SeriesRenameEnum.T1CUBE_SAG: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.SAG,
+            ContrastEnum.NE,
+        },
+        T1SeriesRenameEnum.T1CUBE_COR: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.COR,
+            ContrastEnum.NE,
+        },
+        T1SeriesRenameEnum.T1CUBECE_AXI: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.CE,
+        },
+        T1SeriesRenameEnum.T1CUBECE_SAG: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.SAG,
+            ContrastEnum.CE,
+        },
+        T1SeriesRenameEnum.T1CUBECE_COR: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.COR,
+            ContrastEnum.CE,
+        },
+        T1SeriesRenameEnum.T1FLAIRCUBE_AXI: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.FLAIR,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.NE,
+        },
+        T1SeriesRenameEnum.T1FLAIRCUBE_SAG: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.FLAIR,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.SAG,
+            ContrastEnum.NE,
+        },
+        T1SeriesRenameEnum.T1FLAIRCUBE_COR: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.FLAIR,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.COR,
+            ContrastEnum.NE,
+        },
+        T1SeriesRenameEnum.T1FLAIRCUBECE_AXI: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.FLAIR,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.CE,
+        },
+        T1SeriesRenameEnum.T1FLAIRCUBECE_SAG: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.FLAIR,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.SAG,
+            ContrastEnum.CE,
+        },
+        T1SeriesRenameEnum.T1FLAIRCUBECE_COR: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.FLAIR,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.COR,
+            ContrastEnum.CE,
+        },
+        T1SeriesRenameEnum.T1BRAVO_AXI: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.BRAVO,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.NE,
+        },
+        T1SeriesRenameEnum.T1BRAVOCE_AXI: {
+            T1SeriesRenameEnum.T1,
+            SeriesEnum.BRAVO,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.CE,
+        },
     }
 
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_3D,
-                                                                          MRAcquisitionTypeEnum.TYPE_2D,
-                                                                          )
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (
+        MRAcquisitionTypeEnum.TYPE_3D,
+        MRAcquisitionTypeEnum.TYPE_2D,
+    )
     image_orientation_processing_strategy = ImageOrientationProcessingStrategy()
     contrast_processing_strategy = ContrastProcessingStrategy()
     series_group_fn_list = []
@@ -423,7 +557,9 @@ class T1ProcessingStrategy(MRRenameSeriesProcessingStrategy):
 
     @classmethod
     def get_image_orientation(cls, dicom_ds: FileDataset):
-        image_orientation = cls.image_orientation_processing_strategy.process(dicom_ds=dicom_ds)
+        image_orientation = cls.image_orientation_processing_strategy.process(
+            dicom_ds=dicom_ds
+        )
         return image_orientation
 
     @classmethod
@@ -432,7 +568,10 @@ class T1ProcessingStrategy(MRRenameSeriesProcessingStrategy):
         return contrast
 
     @classmethod
-    def get_flair(cls, dicom_ds: FileDataset, ):
+    def get_flair(
+        cls,
+        dicom_ds: FileDataset,
+    ):
         tr = float(dicom_ds[0x18, 0x80].value)
         te = float(dicom_ds[0x18, 0x81].value)
         if 800 <= tr <= 3000 and te <= 30:
@@ -442,25 +581,34 @@ class T1ProcessingStrategy(MRRenameSeriesProcessingStrategy):
         return NullEnum.NULL
 
     @classmethod
-    def get_cube(cls, dicom_ds: FileDataset, ):
-        pulse_sequence_name = dicom_ds.get((0x19, 0x109c))
+    def get_cube(
+        cls,
+        dicom_ds: FileDataset,
+    ):
+        pulse_sequence_name = dicom_ds.get((0x19, 0x109C))
         if pulse_sequence_name:
             if str(pulse_sequence_name.value).lower() == SeriesEnum.CUBE.value.lower():
                 return SeriesEnum.CUBE
         return NullEnum.NULL
 
     @classmethod
-    def get_bravo(cls, dicom_ds: FileDataset, ):
-        pulse_sequence_name = dicom_ds.get((0x19, 0x109c))
+    def get_bravo(
+        cls,
+        dicom_ds: FileDataset,
+    ):
+        pulse_sequence_name = dicom_ds.get((0x19, 0x109C))
         if pulse_sequence_name:
             if str(pulse_sequence_name.value).lower() == SeriesEnum.BRAVO.value.lower():
                 return T1SeriesRenameEnum.T1, SeriesEnum.BRAVO
-            elif str(pulse_sequence_name.value).lower() == SeriesEnum.FSPGR.value.lower():
+            elif (
+                str(pulse_sequence_name.value).lower() == SeriesEnum.FSPGR.value.lower()
+            ):
                 return T1SeriesRenameEnum.T1, SeriesEnum.BRAVO
         return NullEnum.NULL
 
-    def type_process(self, dicom_ds: FileDataset, type_series_rename_mapping, type_series_rename_dict) -> Union[
-        BaseEnum, MRSeriesRenameEnum]:
+    def type_process(
+        self, dicom_ds: FileDataset, type_series_rename_mapping, type_series_rename_dict
+    ) -> Union[BaseEnum, MRSeriesRenameEnum]:
         series_description = dicom_ds.get((0x08, 0x103E))
         for series_rename_enum, series_pattern in type_series_rename_mapping.items():
             match_result = series_pattern.match(series_description.value)
@@ -473,7 +621,10 @@ class T1ProcessingStrategy(MRRenameSeriesProcessingStrategy):
                             series_group_set.update(item_enum)
                         else:
                             series_group_set.add(item_enum)
-                for series_rename_enum, series_rename_group_set in type_series_rename_dict.items():
+                for (
+                    series_rename_enum,
+                    series_rename_group_set,
+                ) in type_series_rename_dict.items():
                     if series_group_set == series_rename_group_set:
                         return series_rename_enum
                         # 3D (BRAVO, CUBE 會有一組"原始檔 最細切"，放射師會再重組成AXI, SAG, COR)
@@ -490,83 +641,190 @@ class T1ProcessingStrategy(MRRenameSeriesProcessingStrategy):
         # if mr_acquisition_type_enum == MRAcquisitionTypeEnum.TYPE_3D:
         #     return self.type_3d_process(dicom_ds)
         # return NullEnum.NULL
-        mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+        mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(
+            dicom_ds=dicom_ds
+        )
         if mr_acquisition_type_enum == MRAcquisitionTypeEnum.TYPE_2D:
-            return self.type_process(dicom_ds, self.type_2D_series_rename_mapping, self.type_2D_series_rename_dict)
+            return self.type_process(
+                dicom_ds,
+                self.type_2D_series_rename_mapping,
+                self.type_2D_series_rename_dict,
+            )
         if mr_acquisition_type_enum == MRAcquisitionTypeEnum.TYPE_3D:
-            return self.type_process(dicom_ds, self.type_3D_series_rename_mapping, self.type_3D_series_rename_dict)
+            return self.type_process(
+                dicom_ds,
+                self.type_3D_series_rename_mapping,
+                self.type_3D_series_rename_dict,
+            )
         return NullEnum.NULL
 
 
 class T2ProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_rename_mapping = {
-        T2SeriesRenameEnum.T2: re.compile('.*(T2).*', re.IGNORECASE),
-        SeriesEnum.FLAIR: re.compile('(FLAIR)', re.IGNORECASE),
-        SeriesEnum.CUBE: re.compile('.*(CUBE).*', re.IGNORECASE),
+        T2SeriesRenameEnum.T2: re.compile(".*(T2).*", re.IGNORECASE),
+        SeriesEnum.FLAIR: re.compile("(FLAIR)", re.IGNORECASE),
+        SeriesEnum.CUBE: re.compile(".*(CUBE).*", re.IGNORECASE),
     }
     type_3D_series_rename_mapping = series_rename_mapping
 
     type_2D_series_rename_mapping = {
-        T2SeriesRenameEnum.T2: re.compile('.*(T2).*', re.IGNORECASE),
-        SeriesEnum.FLAIR: re.compile('(FLAIR)', re.IGNORECASE),
+        T2SeriesRenameEnum.T2: re.compile(".*(T2).*", re.IGNORECASE),
+        SeriesEnum.FLAIR: re.compile("(FLAIR)", re.IGNORECASE),
     }
 
     type_2D_series_rename_dict = {
-        T2SeriesRenameEnum.T2_AXI: {T2SeriesRenameEnum.T2, ImageOrientationEnum.AXI, ContrastEnum.NE},
-        T2SeriesRenameEnum.T2_SAG: {T2SeriesRenameEnum.T2, ImageOrientationEnum.SAG, ContrastEnum.NE},
-        T2SeriesRenameEnum.T2_COR: {T2SeriesRenameEnum.T2, ImageOrientationEnum.COR, ContrastEnum.NE},
-        T2SeriesRenameEnum.T2CE_AXI: {T2SeriesRenameEnum.T2, ImageOrientationEnum.AXI, ContrastEnum.CE},
-        T2SeriesRenameEnum.T2CE_SAG: {T2SeriesRenameEnum.T2, ImageOrientationEnum.SAG, ContrastEnum.CE},
-        T2SeriesRenameEnum.T2CE_COR: {T2SeriesRenameEnum.T2, ImageOrientationEnum.COR, ContrastEnum.CE},
-
-        T2SeriesRenameEnum.T2FLAIR_AXI: {T2SeriesRenameEnum.T2, SeriesEnum.FLAIR, ImageOrientationEnum.AXI,
-                                         ContrastEnum.NE},
-        T2SeriesRenameEnum.T2FLAIR_SAG: {T2SeriesRenameEnum.T2, SeriesEnum.FLAIR, ImageOrientationEnum.SAG,
-                                         ContrastEnum.NE},
-        T2SeriesRenameEnum.T2FLAIR_COR: {T2SeriesRenameEnum.T2, SeriesEnum.FLAIR, ImageOrientationEnum.COR,
-                                         ContrastEnum.NE},
-        T2SeriesRenameEnum.T2FLAIRCE_AXI: {T2SeriesRenameEnum.T2, SeriesEnum.FLAIR, ImageOrientationEnum.AXI,
-                                           ContrastEnum.CE},
-        T2SeriesRenameEnum.T2FLAIRCE_SAG: {T2SeriesRenameEnum.T2, SeriesEnum.FLAIR, ImageOrientationEnum.SAG,
-                                           ContrastEnum.CE},
-        T2SeriesRenameEnum.T2FLAIRCE_COR: {T2SeriesRenameEnum.T2, SeriesEnum.FLAIR, ImageOrientationEnum.COR,
-                                           ContrastEnum.CE},
+        T2SeriesRenameEnum.T2_AXI: {
+            T2SeriesRenameEnum.T2,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.NE,
+        },
+        T2SeriesRenameEnum.T2_SAG: {
+            T2SeriesRenameEnum.T2,
+            ImageOrientationEnum.SAG,
+            ContrastEnum.NE,
+        },
+        T2SeriesRenameEnum.T2_COR: {
+            T2SeriesRenameEnum.T2,
+            ImageOrientationEnum.COR,
+            ContrastEnum.NE,
+        },
+        T2SeriesRenameEnum.T2CE_AXI: {
+            T2SeriesRenameEnum.T2,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.CE,
+        },
+        T2SeriesRenameEnum.T2CE_SAG: {
+            T2SeriesRenameEnum.T2,
+            ImageOrientationEnum.SAG,
+            ContrastEnum.CE,
+        },
+        T2SeriesRenameEnum.T2CE_COR: {
+            T2SeriesRenameEnum.T2,
+            ImageOrientationEnum.COR,
+            ContrastEnum.CE,
+        },
+        T2SeriesRenameEnum.T2FLAIR_AXI: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.FLAIR,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.NE,
+        },
+        T2SeriesRenameEnum.T2FLAIR_SAG: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.FLAIR,
+            ImageOrientationEnum.SAG,
+            ContrastEnum.NE,
+        },
+        T2SeriesRenameEnum.T2FLAIR_COR: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.FLAIR,
+            ImageOrientationEnum.COR,
+            ContrastEnum.NE,
+        },
+        T2SeriesRenameEnum.T2FLAIRCE_AXI: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.FLAIR,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.CE,
+        },
+        T2SeriesRenameEnum.T2FLAIRCE_SAG: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.FLAIR,
+            ImageOrientationEnum.SAG,
+            ContrastEnum.CE,
+        },
+        T2SeriesRenameEnum.T2FLAIRCE_COR: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.FLAIR,
+            ImageOrientationEnum.COR,
+            ContrastEnum.CE,
+        },
     }
 
     type_3D_series_rename_dict = {
-        T2SeriesRenameEnum.T2CUBE_AXI: {T2SeriesRenameEnum.T2, SeriesEnum.CUBE, ImageOrientationEnum.AXI,
-                                        ContrastEnum.NE},
-        T2SeriesRenameEnum.T2CUBE_SAG: {T2SeriesRenameEnum.T2, SeriesEnum.CUBE, ImageOrientationEnum.SAG,
-                                        ContrastEnum.NE},
-        T2SeriesRenameEnum.T2CUBE_COR: {T2SeriesRenameEnum.T2, SeriesEnum.CUBE, ImageOrientationEnum.COR,
-                                        ContrastEnum.NE},
-        T2SeriesRenameEnum.T2CUBECE_AXI: {T2SeriesRenameEnum.T2, SeriesEnum.CUBE, ImageOrientationEnum.AXI,
-                                          ContrastEnum.CE},
-        T2SeriesRenameEnum.T2CUBECE_SAG: {T2SeriesRenameEnum.T2, SeriesEnum.CUBE, ImageOrientationEnum.SAG,
-                                          ContrastEnum.CE},
-        T2SeriesRenameEnum.T2CUBECE_COR: {T2SeriesRenameEnum.T2, SeriesEnum.CUBE, ImageOrientationEnum.COR,
-                                          ContrastEnum.CE},
-        T2SeriesRenameEnum.T2FLAIRCUBE_AXI: {T2SeriesRenameEnum.T2, SeriesEnum.FLAIR, SeriesEnum.CUBE,
-                                             ImageOrientationEnum.AXI,
-                                             ContrastEnum.NE},
-        T2SeriesRenameEnum.T2FLAIRCUBE_SAG: {T2SeriesRenameEnum.T2, SeriesEnum.FLAIR, SeriesEnum.CUBE,
-                                             ImageOrientationEnum.SAG,
-                                             ContrastEnum.NE},
-        T2SeriesRenameEnum.T2FLAIRCUBE_COR: {T2SeriesRenameEnum.T2, SeriesEnum.FLAIR, SeriesEnum.CUBE,
-                                             ImageOrientationEnum.COR,
-                                             ContrastEnum.NE},
-        T2SeriesRenameEnum.T2FLAIRCUBECE_AXI: {T2SeriesRenameEnum.T2, SeriesEnum.FLAIR, SeriesEnum.CUBE,
-                                               ImageOrientationEnum.AXI,
-                                               ContrastEnum.CE},
-        T2SeriesRenameEnum.T2FLAIRCUBECE_SAG: {T2SeriesRenameEnum.T2, SeriesEnum.FLAIR, SeriesEnum.CUBE,
-                                               ImageOrientationEnum.SAG,
-                                               ContrastEnum.CE},
-        T2SeriesRenameEnum.T2FLAIRCUBECE_COR: {T2SeriesRenameEnum.T2, SeriesEnum.FLAIR, SeriesEnum.CUBE,
-                                               ImageOrientationEnum.COR,
-                                               ContrastEnum.CE},
+        T2SeriesRenameEnum.T2CUBE_AXI: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.NE,
+        },
+        T2SeriesRenameEnum.T2CUBE_SAG: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.SAG,
+            ContrastEnum.NE,
+        },
+        T2SeriesRenameEnum.T2CUBE_COR: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.COR,
+            ContrastEnum.NE,
+        },
+        T2SeriesRenameEnum.T2CUBECE_AXI: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.CE,
+        },
+        T2SeriesRenameEnum.T2CUBECE_SAG: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.SAG,
+            ContrastEnum.CE,
+        },
+        T2SeriesRenameEnum.T2CUBECE_COR: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.COR,
+            ContrastEnum.CE,
+        },
+        T2SeriesRenameEnum.T2FLAIRCUBE_AXI: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.FLAIR,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.NE,
+        },
+        T2SeriesRenameEnum.T2FLAIRCUBE_SAG: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.FLAIR,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.SAG,
+            ContrastEnum.NE,
+        },
+        T2SeriesRenameEnum.T2FLAIRCUBE_COR: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.FLAIR,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.COR,
+            ContrastEnum.NE,
+        },
+        T2SeriesRenameEnum.T2FLAIRCUBECE_AXI: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.FLAIR,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.AXI,
+            ContrastEnum.CE,
+        },
+        T2SeriesRenameEnum.T2FLAIRCUBECE_SAG: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.FLAIR,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.SAG,
+            ContrastEnum.CE,
+        },
+        T2SeriesRenameEnum.T2FLAIRCUBECE_COR: {
+            T2SeriesRenameEnum.T2,
+            SeriesEnum.FLAIR,
+            SeriesEnum.CUBE,
+            ImageOrientationEnum.COR,
+            ContrastEnum.CE,
+        },
     }
 
-    mr_acquisition_typemr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (
+    mr_acquisition_typemr_acquisition_type: tuple[
+        Union[MRAcquisitionTypeEnum, NullEnum]
+    ] = (
         MRAcquisitionTypeEnum.TYPE_3D,
         MRAcquisitionTypeEnum.TYPE_2D,
     )
@@ -585,7 +843,9 @@ class T2ProcessingStrategy(MRRenameSeriesProcessingStrategy):
 
     @classmethod
     def get_image_orientation(cls, dicom_ds: FileDataset):
-        image_orientation = cls.image_orientation_processing_strategy.process(dicom_ds=dicom_ds)
+        image_orientation = cls.image_orientation_processing_strategy.process(
+            dicom_ds=dicom_ds
+        )
         return image_orientation
 
     @classmethod
@@ -594,7 +854,10 @@ class T2ProcessingStrategy(MRRenameSeriesProcessingStrategy):
         return contrast
 
     @classmethod
-    def get_flair(cls, dicom_ds: FileDataset, ):
+    def get_flair(
+        cls,
+        dicom_ds: FileDataset,
+    ):
         tr = float(dicom_ds[0x18, 0x80].value)
         te = float(dicom_ds[0x18, 0x81].value)
         if 5990 <= tr <= 10000 and te >= 80:
@@ -604,15 +867,19 @@ class T2ProcessingStrategy(MRRenameSeriesProcessingStrategy):
         return NullEnum.NULL
 
     @classmethod
-    def get_cube(cls, dicom_ds: FileDataset, ):
-        pulse_sequence_name = dicom_ds.get((0x19, 0x109c))
+    def get_cube(
+        cls,
+        dicom_ds: FileDataset,
+    ):
+        pulse_sequence_name = dicom_ds.get((0x19, 0x109C))
         if pulse_sequence_name:
             if SeriesEnum.CUBE.value.lower() in str(pulse_sequence_name.value).lower():
                 return SeriesEnum.CUBE
         return NullEnum.NULL
 
-    def type_process(self, dicom_ds: FileDataset, type_series_rename_mapping, type_series_rename_dict) -> Union[
-        BaseEnum, MRSeriesRenameEnum]:
+    def type_process(
+        self, dicom_ds: FileDataset, type_series_rename_mapping, type_series_rename_dict
+    ) -> Union[BaseEnum, MRSeriesRenameEnum]:
         series_description = dicom_ds.get((0x08, 0x103E))
         for series_rename_enum, series_pattern in type_series_rename_mapping.items():
             match_result = series_pattern.match(series_description.value)
@@ -625,7 +892,10 @@ class T2ProcessingStrategy(MRRenameSeriesProcessingStrategy):
                             series_group_set.update(item_enum)
                         else:
                             series_group_set.add(item_enum)
-                for series_rename_enum, series_rename_group_set in type_series_rename_dict.items():
+                for (
+                    series_rename_enum,
+                    series_rename_group_set,
+                ) in type_series_rename_dict.items():
                     if series_group_set == series_rename_group_set:
                         return series_rename_enum
         return NullEnum.NULL
@@ -633,36 +903,55 @@ class T2ProcessingStrategy(MRRenameSeriesProcessingStrategy):
     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         #  modality == MR
         # # mr_acquisition_type == 3D or 2D
-        mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+        mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(
+            dicom_ds=dicom_ds
+        )
 
         if mr_acquisition_type_enum == MRAcquisitionTypeEnum.TYPE_2D:
-            return self.type_process(dicom_ds, self.type_2D_series_rename_mapping, self.type_2D_series_rename_dict)
+            return self.type_process(
+                dicom_ds,
+                self.type_2D_series_rename_mapping,
+                self.type_2D_series_rename_dict,
+            )
         if mr_acquisition_type_enum == MRAcquisitionTypeEnum.TYPE_3D:
-            return self.type_process(dicom_ds, self.type_3D_series_rename_mapping, self.type_3D_series_rename_dict)
+            return self.type_process(
+                dicom_ds,
+                self.type_3D_series_rename_mapping,
+                self.type_3D_series_rename_dict,
+            )
         return NullEnum.NULL
 
 
 class ASLProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_rename_mapping = {
-        ASLSEQSeriesRenameEnum.ASLSEQ: re.compile('(multi-Delay ASL SEQ)', re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLPROD: re.compile('(3D ASL [(]non-contrast[)])', re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLSEQATT: re.compile('([(]Transit delay[)] multi-Delay ASL SEQ)', re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLSEQATT_COLOR: re.compile('([(]Color Transit delay[)] multi-Delay ASL SEQ)',
-                                                           re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLSEQCBF: re.compile('([(]Transit corrected CBF[)] multi-Delay ASL SEQ)',
-                                                     re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLSEQCBF_COLOR: re.compile('([(]Color Transit corrected CBF[)] multi-Delay ASL SEQ)',
-                                                           re.IGNORECASE),
-        ASLSEQSeriesRenameEnum.ASLSEQPW: re.compile('([(]per del, mean PW, REF[)] multi-Delay ASL SEQ)', re.IGNORECASE),
-
+        ASLSEQSeriesRenameEnum.ASLSEQ: re.compile(
+            "(multi-Delay ASL SEQ)", re.IGNORECASE
+        ),
+        ASLSEQSeriesRenameEnum.ASLPROD: re.compile(
+            "(3D ASL [(]non-contrast[)])", re.IGNORECASE
+        ),
+        ASLSEQSeriesRenameEnum.ASLSEQATT: re.compile(
+            "([(]Transit delay[)] multi-Delay ASL SEQ)", re.IGNORECASE
+        ),
+        ASLSEQSeriesRenameEnum.ASLSEQATT_COLOR: re.compile(
+            "([(]Color Transit delay[)] multi-Delay ASL SEQ)", re.IGNORECASE
+        ),
+        ASLSEQSeriesRenameEnum.ASLSEQCBF: re.compile(
+            "([(]Transit corrected CBF[)] multi-Delay ASL SEQ)", re.IGNORECASE
+        ),
+        ASLSEQSeriesRenameEnum.ASLSEQCBF_COLOR: re.compile(
+            "([(]Color Transit corrected CBF[)] multi-Delay ASL SEQ)", re.IGNORECASE
+        ),
+        ASLSEQSeriesRenameEnum.ASLSEQPW: re.compile(
+            "([(]per del, mean PW, REF[)] multi-Delay ASL SEQ)", re.IGNORECASE
+        ),
     }
     type_3D_series_rename_mapping = series_rename_mapping
 
-    type_3D_series_rename_dict = {
-
-    }
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_3D,
-                                                                          )
+    type_3D_series_rename_dict = {}
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (
+        MRAcquisitionTypeEnum.TYPE_3D,
+    )
     series_group_fn_list = []
 
     @classmethod
@@ -671,8 +960,9 @@ class ASLProcessingStrategy(MRRenameSeriesProcessingStrategy):
             pass
         return cls.series_group_fn_list
 
-    def type_process(self, dicom_ds: FileDataset, type_series_rename_mapping, type_series_rename_dict) -> Union[
-        BaseEnum, MRSeriesRenameEnum]:
+    def type_process(
+        self, dicom_ds: FileDataset, type_series_rename_mapping, type_series_rename_dict
+    ) -> Union[BaseEnum, MRSeriesRenameEnum]:
         series_description = dicom_ds.get((0x08, 0x103E))
         for series_rename_enum, series_pattern in type_series_rename_mapping.items():
             match_result = series_pattern.match(series_description.value)
@@ -683,35 +973,42 @@ class ASLProcessingStrategy(MRRenameSeriesProcessingStrategy):
     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         #  modality == MR
         # # mr_acquisition_type == 3D or 2D
-        mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+        mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(
+            dicom_ds=dicom_ds
+        )
         if mr_acquisition_type_enum == MRAcquisitionTypeEnum.TYPE_3D:
-            return self.type_process(dicom_ds, self.type_3D_series_rename_mapping, self.type_3D_series_rename_dict)
+            return self.type_process(
+                dicom_ds,
+                self.type_3D_series_rename_mapping,
+                self.type_3D_series_rename_dict,
+            )
         return NullEnum.NULL
 
 
 class DSCProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_rename_mapping = {
-        DSCSeriesRenameEnum.DSC: re.compile('.*(AUTOPWI).*', re.IGNORECASE),
-        DSCSeriesRenameEnum.rCBF: re.compile('.*(CBF).*', re.IGNORECASE),
-        DSCSeriesRenameEnum.rCBV: re.compile('.*(CBV).*', re.IGNORECASE),
-        DSCSeriesRenameEnum.MTT: re.compile('.*(MTT).*', re.IGNORECASE),
+        DSCSeriesRenameEnum.DSC: re.compile(".*(AUTOPWI).*", re.IGNORECASE),
+        DSCSeriesRenameEnum.rCBF: re.compile(".*(CBF).*", re.IGNORECASE),
+        DSCSeriesRenameEnum.rCBV: re.compile(".*(CBV).*", re.IGNORECASE),
+        DSCSeriesRenameEnum.MTT: re.compile(".*(MTT).*", re.IGNORECASE),
     }
     type_2D_series_rename_mapping = {
-        DSCSeriesRenameEnum.DSC: re.compile('.*(AUTOPWI).*', re.IGNORECASE),
+        DSCSeriesRenameEnum.DSC: re.compile(".*(AUTOPWI).*", re.IGNORECASE),
     }
     type_null_series_rename_mapping = {
-        DSCSeriesRenameEnum.rCBF: re.compile('.*(CBF).*', re.IGNORECASE),
-        DSCSeriesRenameEnum.rCBV: re.compile('.*(CBV).*', re.IGNORECASE),
-        DSCSeriesRenameEnum.MTT: re.compile('.*(MTT).*', re.IGNORECASE),
+        DSCSeriesRenameEnum.rCBF: re.compile(".*(CBF).*", re.IGNORECASE),
+        DSCSeriesRenameEnum.rCBV: re.compile(".*(CBV).*", re.IGNORECASE),
+        DSCSeriesRenameEnum.MTT: re.compile(".*(MTT).*", re.IGNORECASE),
     }
     type_null_series_rename_dict = {
         DSCSeriesRenameEnum.rCBF: {DSCSeriesRenameEnum.rCBF},
         DSCSeriesRenameEnum.rCBV: {DSCSeriesRenameEnum.rCBV},
         DSCSeriesRenameEnum.MTT: {DSCSeriesRenameEnum.MTT},
     }
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_2D,
-                                                                          NullEnum.NULL,
-                                                                          )
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (
+        MRAcquisitionTypeEnum.TYPE_2D,
+        NullEnum.NULL,
+    )
     series_group_fn_list = []
 
     @classmethod
@@ -729,19 +1026,27 @@ class DSCProcessingStrategy(MRRenameSeriesProcessingStrategy):
             cls.series_group_fn_list.append(cls.get_functional_processing_name)
         return cls.series_group_fn_list
 
-    def type_2D_process(self, dicom_ds: FileDataset) -> Union[
-        BaseEnum, MRSeriesRenameEnum]:
+    def type_2D_process(
+        self, dicom_ds: FileDataset
+    ) -> Union[BaseEnum, MRSeriesRenameEnum]:
         series_description = dicom_ds.get((0x08, 0x103E))
-        for series_rename_enum, series_pattern in self.type_2D_series_rename_mapping.items():
+        for (
+            series_rename_enum,
+            series_pattern,
+        ) in self.type_2D_series_rename_mapping.items():
             match_result = series_pattern.match(series_description.value)
             if match_result:
                 return series_rename_enum
         return NullEnum.NULL
 
-    def type_null_process(self, dicom_ds: FileDataset) -> Union[
-        BaseEnum, MRSeriesRenameEnum]:
+    def type_null_process(
+        self, dicom_ds: FileDataset
+    ) -> Union[BaseEnum, MRSeriesRenameEnum]:
         series_description = dicom_ds.get((0x08, 0x103E))
-        for series_rename_enum, series_pattern in self.type_null_series_rename_mapping.items():
+        for (
+            series_rename_enum,
+            series_pattern,
+        ) in self.type_null_series_rename_mapping.items():
             match_result = series_pattern.match(series_description.value)
             if match_result:
                 series_group_set = set()
@@ -752,7 +1057,10 @@ class DSCProcessingStrategy(MRRenameSeriesProcessingStrategy):
                             series_group_set.update(item_enum)
                         else:
                             series_group_set.add(item_enum)
-                for series_rename_enum, series_rename_group_set in self.type_null_series_rename_dict.items():
+                for (
+                    series_rename_enum,
+                    series_rename_group_set,
+                ) in self.type_null_series_rename_dict.items():
                     if series_group_set == series_rename_group_set:
                         return series_rename_enum
         return NullEnum.NULL
@@ -760,22 +1068,34 @@ class DSCProcessingStrategy(MRRenameSeriesProcessingStrategy):
     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         #  modality == MR
         # # mr_acquisition_type == 3D or 2D
-        mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+        mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(
+            dicom_ds=dicom_ds
+        )
         if mr_acquisition_type_enum == MRAcquisitionTypeEnum.TYPE_2D:
-            return self.type_2D_process(dicom_ds, )
+            return self.type_2D_process(
+                dicom_ds,
+            )
         if mr_acquisition_type_enum == NullEnum.NULL:
-            return self.type_null_process(dicom_ds, )
+            return self.type_null_process(
+                dicom_ds,
+            )
         return NullEnum.NULL
 
 
 class CVRProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_rename_mapping = {
-        MRSeriesRenameEnum.CVR2000_EAR: re.compile('.*(CVR).*(2000).*(ear).*$', re.IGNORECASE),
-        MRSeriesRenameEnum.CVR2000_EYE: re.compile('.*(CVR).*(2000).*(eye).*$', re.IGNORECASE),
-        MRSeriesRenameEnum.CVR2000: re.compile('.*(CVR).*(2000).*$', re.IGNORECASE),
-        MRSeriesRenameEnum.CVR1000: re.compile('.*(CVR).*(1000).*$', re.IGNORECASE),
+        MRSeriesRenameEnum.CVR2000_EAR: re.compile(
+            ".*(CVR).*(2000).*(ear).*$", re.IGNORECASE
+        ),
+        MRSeriesRenameEnum.CVR2000_EYE: re.compile(
+            ".*(CVR).*(2000).*(eye).*$", re.IGNORECASE
+        ),
+        MRSeriesRenameEnum.CVR2000: re.compile(".*(CVR).*(2000).*$", re.IGNORECASE),
+        MRSeriesRenameEnum.CVR1000: re.compile(".*(CVR).*(1000).*$", re.IGNORECASE),
     }
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_2D,)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (
+        MRAcquisitionTypeEnum.TYPE_2D,
+    )
 
     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         #  modality == MR
@@ -790,9 +1110,11 @@ class CVRProcessingStrategy(MRRenameSeriesProcessingStrategy):
 
 class RestingProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_rename_mapping = {
-        MRSeriesRenameEnum.RESTING: re.compile('.*(resting).*$', re.IGNORECASE),
+        MRSeriesRenameEnum.RESTING: re.compile(".*(resting).*$", re.IGNORECASE),
     }
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_2D,)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (
+        MRAcquisitionTypeEnum.TYPE_2D,
+    )
 
     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         #  modality == MR
@@ -807,16 +1129,16 @@ class RestingProcessingStrategy(MRRenameSeriesProcessingStrategy):
 
 class DTIProcessingStrategy(MRRenameSeriesProcessingStrategy):
     series_rename_mapping = {
-        MRSeriesRenameEnum.DTI32D: re.compile('.*(DTI).*', re.IGNORECASE),
-        MRSeriesRenameEnum.DTI64D: re.compile('.*(DTI).*', re.IGNORECASE),
-
+        MRSeriesRenameEnum.DTI32D: re.compile(".*(DTI).*", re.IGNORECASE),
+        MRSeriesRenameEnum.DTI64D: re.compile(".*(DTI).*", re.IGNORECASE),
     }
     series_rename_dict = {
         MRSeriesRenameEnum.DTI32D: {DTISeriesEnum.DTI32D},
-        MRSeriesRenameEnum.DTI64D: {DTISeriesEnum.DTI64D}
-
+        MRSeriesRenameEnum.DTI64D: {DTISeriesEnum.DTI64D},
     }
-    mr_acquisition_type: Tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (MRAcquisitionTypeEnum.TYPE_2D,)
+    mr_acquisition_type: tuple[Union[MRAcquisitionTypeEnum, NullEnum]] = (
+        MRAcquisitionTypeEnum.TYPE_2D,
+    )
     series_group_fn_list = []
 
     @classmethod
@@ -834,8 +1156,9 @@ class DTIProcessingStrategy(MRRenameSeriesProcessingStrategy):
                     return dti_diffusion_rename_enum
         return NullEnum.NULL
 
-    def type_process(self, dicom_ds: FileDataset, type_series_rename_mapping, type_series_rename_dict) -> Union[
-        BaseEnum, MRSeriesRenameEnum]:
+    def type_process(
+        self, dicom_ds: FileDataset, type_series_rename_mapping, type_series_rename_dict
+    ) -> Union[BaseEnum, MRSeriesRenameEnum]:
         series_description = dicom_ds.get((0x08, 0x103E))
         for series_rename_enum, series_pattern in type_series_rename_mapping.items():
             match_result = series_pattern.match(series_description.value)
@@ -848,7 +1171,10 @@ class DTIProcessingStrategy(MRRenameSeriesProcessingStrategy):
                             series_group_set.update(item_enum)
                         else:
                             series_group_set.add(item_enum)
-                for series_rename_enum, series_rename_group_set in type_series_rename_dict.items():
+                for (
+                    series_rename_enum,
+                    series_rename_group_set,
+                ) in type_series_rename_dict.items():
                     if series_group_set == series_rename_group_set:
                         return series_rename_enum
 
@@ -857,36 +1183,50 @@ class DTIProcessingStrategy(MRRenameSeriesProcessingStrategy):
     def process(self, dicom_ds: FileDataset) -> Union[BaseEnum, MRSeriesRenameEnum]:
         #  modality == MR
         # # mr_acquisition_type == 3D or 2D
-        mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+        mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(
+            dicom_ds=dicom_ds
+        )
         if mr_acquisition_type_enum == MRAcquisitionTypeEnum.TYPE_2D:
-            return self.type_process(dicom_ds, self.series_rename_mapping, self.series_rename_dict)
+            return self.type_process(
+                dicom_ds, self.series_rename_mapping, self.series_rename_dict
+            )
 
         return NullEnum.NULL
 
 
 class ConvertManager:
-    modality_processing_strategy: ModalityProcessingStrategy = ModalityProcessingStrategy()
-    mr_acquisition_type_processing_strategy: MRAcquisitionTypeProcessingStrategy = MRAcquisitionTypeProcessingStrategy()
-    processing_strategy_list: List[MRRenameSeriesProcessingStrategy] = [DwiProcessingStrategy(),
-                                                                        ADCProcessingStrategy(),
-                                                                        EADCProcessingStrategy(),
-                                                                        SWANProcessingStrategy(),
-                                                                        ESWANProcessingStrategy(),
-                                                                        MRABrainProcessingStrategy(),
-                                                                        MRANeckProcessingStrategy(),
-                                                                        MRAVRBrainProcessingStrategy(),
-                                                                        MRAVRNeckProcessingStrategy(),
-                                                                        T1ProcessingStrategy(),
-                                                                        T2ProcessingStrategy(),
-                                                                        ASLProcessingStrategy(),
-                                                                        DSCProcessingStrategy(),
-                                                                        RestingProcessingStrategy(),
-                                                                        CVRProcessingStrategy(),
-                                                                        DTIProcessingStrategy()]
+    modality_processing_strategy: ModalityProcessingStrategy = (
+        ModalityProcessingStrategy()
+    )
+    mr_acquisition_type_processing_strategy: MRAcquisitionTypeProcessingStrategy = (
+        MRAcquisitionTypeProcessingStrategy()
+    )
+    processing_strategy_list: List[MRRenameSeriesProcessingStrategy] = [
+        DwiProcessingStrategy(),
+        ADCProcessingStrategy(),
+        EADCProcessingStrategy(),
+        SWANProcessingStrategy(),
+        ESWANProcessingStrategy(),
+        MRABrainProcessingStrategy(),
+        MRANeckProcessingStrategy(),
+        MRAVRBrainProcessingStrategy(),
+        MRAVRNeckProcessingStrategy(),
+        T1ProcessingStrategy(),
+        T2ProcessingStrategy(),
+        ASLProcessingStrategy(),
+        DSCProcessingStrategy(),
+        RestingProcessingStrategy(),
+        CVRProcessingStrategy(),
+        DTIProcessingStrategy(),
+    ]
 
-    def __init__(self, input_path: Union[str, pathlib.Path],
-                 output_path: Union[str, pathlib.Path],
-                 *args, **kwargs):
+    def __init__(
+        self,
+        input_path: Union[str, pathlib.Path],
+        output_path: Union[str, pathlib.Path],
+        *args,
+        **kwargs,
+    ):
         self._input_path = pathlib.Path(input_path)
         self.output_path = pathlib.Path(output_path)
 
@@ -910,11 +1250,13 @@ class ConvertManager:
             return None
         else:
             series_date = series_date.value
-        return f'{patient_id}_{series_date}_{modality}_{accession_number}'
+        return f"{patient_id}_{series_date}_{modality}_{accession_number}"
 
     def rename_dicom_path(self, dicom_ds: FileDataset):
         modality_enum = self.modality_processing_strategy.process(dicom_ds=dicom_ds)
-        mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(dicom_ds=dicom_ds)
+        mr_acquisition_type_enum = self.mr_acquisition_type_processing_strategy.process(
+            dicom_ds=dicom_ds
+        )
         for processing_strategy in self.processing_strategy_list:
             if modality_enum == processing_strategy.modality:
                 for mr_acquisition_type in processing_strategy.mr_acquisition_type:
@@ -922,12 +1264,14 @@ class ConvertManager:
                         series_enum = processing_strategy.process(dicom_ds=dicom_ds)
                         if series_enum is not NullEnum.NULL:
                             return series_enum.value
-        return ''
+        return ""
 
     def rename_process(self, instances_list, *args, **kwargs):
         for instances in instances_list:
             dicom_ds = dcmread(str(instances), stop_before_pixels=True)
-            output_study = self.get_output_study(dicom_ds=dicom_ds, output_path=self.output_path)
+            output_study = self.get_output_study(
+                dicom_ds=dicom_ds, output_path=self.output_path
+            )
             if output_study:
                 rename_series = self.rename_dicom_path(dicom_ds=dicom_ds)
                 if len(rename_series) > 0:
@@ -937,7 +1281,9 @@ class ConvertManager:
                         pass
                     else:
                         output_study_series.mkdir(exist_ok=True)
-                    output_study_instances = output_study_series.joinpath(instances.name)
+                    output_study_instances = output_study_series.joinpath(
+                        instances.name
+                    )
                     if output_study_instances.exists():
                         continue
                     else:
@@ -945,17 +1291,16 @@ class ConvertManager:
                         shutil.copyfile(instances, output_study_instances)
 
     def run(self, executor: Union[ThreadPoolExecutor, None] = None):
-
-        is_dir_flag = all(list(map(lambda x: x.is_dir(), self.input_path.iterdir())))
+        is_dir_flag = all(x.is_dir() for x in self.input_path.iterdir())
         if is_dir_flag:
             for sub_dir in self.input_path.iterdir():
-                instances_list = list(sub_dir.rglob('*.dcm'))
+                instances_list = list(sub_dir.rglob("*.dcm"))
                 if executor:
                     executor.map(self.rename_process, (instances_list,))
                 else:
                     self.rename_process(instances_list=instances_list)
         else:
-            instances_list = list(self.input_path.rglob('*.dcm'))
+            instances_list = list(self.input_path.rglob("*.dcm"))
             if executor:
                 executor.map(self.rename_process, (instances_list,))
             else:
@@ -970,7 +1315,7 @@ class ConvertManager:
         self._input_path = pathlib.Path(value)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # input_path = r'D:\00_Chen\Task08\data\raw'
     # input_path = r'D:\00_Chen\Task08\data\Study_Glymphatics\20231012_00925219_MRI perfusion Glymphatics (-C +C)'
     # input_path = r'D:\00_Chen\Task08\data\Study_Glymphatics\20220830_14951998_MRI perfusion Glymphatics (-C +C)'
@@ -979,20 +1324,39 @@ if __name__ == '__main__':
     # output_path = r'D:\00_Chen\Task08\data\rename_dicom_processing_strategy_0103'
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input', dest='input', type=str, required=True,
-                        help="input the raw dicom folder.\r\n")
-    parser.add_argument('-o', '--output', dest='output', type=str, required=True,
-                        help="output the rename dicom folder.\r\n"
-                             "Example ： python rename_folder.py -i input_path -o output_path")
-    parser.add_argument('--work', dest='work', type=int, default=4,
-                        help="Thread cont .\r\n"
-                             "Example ： python rename_folder.py -i input_path -o output_path --work 8")
+    parser.add_argument(
+        "-i",
+        "--input",
+        dest="input",
+        type=str,
+        required=True,
+        help="input the raw dicom folder.\r\n",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        dest="output",
+        type=str,
+        required=True,
+        help="output the rename dicom folder.\r\n"
+        "Example ： python rename_folder.py -i input_path -o output_path",
+    )
+    parser.add_argument(
+        "--work",
+        dest="work",
+        type=int,
+        default=4,
+        help="Thread cont .\r\n"
+        "Example ： python rename_folder.py -i input_path -o output_path --work 8",
+    )
     args = parser.parse_args()
     output_path = args.output
     input_path = args.input
     work = min(8, max(1, args.work))
     executor = ThreadPoolExecutor(max_workers=work)
     with executor:
-        convert_manager = ConvertManager(input_path=input_path,
-                                         output_path=output_path, )
+        convert_manager = ConvertManager(
+            input_path=input_path,
+            output_path=output_path,
+        )
         convert_manager.run(executor=executor)

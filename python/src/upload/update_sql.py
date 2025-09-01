@@ -9,47 +9,53 @@ from . import SQL_WEB_URL
 class UploadSqlManager:
     url = SQL_WEB_URL
 
-    def __init__(self, input_path: Union[str, pathlib.Path],
-                 *args, **kwargs):
+    def __init__(self, input_path: Union[str, pathlib.Path], *args, **kwargs):
         self._input_path = pathlib.Path(input_path)
 
-    def get_patient_info(self, ):
+    def get_patient_info(
+        self,
+    ):
         pass
 
-    def get_study_info(self, ):
+    def get_study_info(
+        self,
+    ):
         pass
 
-    def get_series_info(self, ):
+    def get_series_info(
+        self,
+    ):
         pass
 
-    def make_series_file_mapping(self, ):
+    def make_series_file_mapping(
+        self,
+    ):
         pass
 
     def upload(self, study_path):
-        meta_path      = study_path.joinpath('.meta')
-        meta_path_list = list(meta_path.iterdir())
+        meta_path = study_path.joinpath(".meta")
+        list(meta_path.iterdir())
         for series_path in study_path.iterdir():
             if series_path.is_file():
                 # nii.gz .meta/series.jsonline mapping
-                if series_path.name.endswith('nii.gz'):
+                if series_path.name.endswith("nii.gz"):
                     print(series_path)
-
 
             if series_path.is_dir():
                 pass
 
     def run(self, executor: Union[ThreadPoolExecutor, None] = None):
-        is_dir_flag = all(list(map(lambda x: x.is_dir(), self.input_path.iterdir())))
+        is_dir_flag = all(x.is_dir() for x in self.input_path.iterdir())
         if is_dir_flag:
             study_path_list = list(self.input_path.iterdir())
             for study_path in study_path_list:
                 if executor:
-                    future = executor.submit(self.upload, study_path=study_path)
+                    executor.submit(self.upload, study_path=study_path)
                 else:
                     self.upload(study_path=study_path)
         else:
             if executor:
-                future = executor.submit(self.upload, study_path=self.input_path)
+                executor.submit(self.upload, study_path=self.input_path)
             else:
                 self.upload(study_path=self.input_path)
             # break
@@ -65,15 +71,26 @@ class UploadSqlManager:
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input', dest='input', type=str, required=True,
-                        help="input rename nifti folder.\r\n")
-    parser.add_argument('--work', dest='work', type=int, default=4,
-                        help="Process cont max values is 4 .\r\n"
-                             "Example: python convert_nifti.py -i input_path -o output_path --work 4")
+    parser.add_argument(
+        "-i",
+        "--input",
+        dest="input",
+        type=str,
+        required=True,
+        help="input rename nifti folder.\r\n",
+    )
+    parser.add_argument(
+        "--work",
+        dest="work",
+        type=int,
+        default=4,
+        help="Process cont max values is 4 .\r\n"
+        "Example: python convert_nifti.py -i input_path -o output_path --work 4",
+    )
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = parse_arguments()
     # input_path = pathlib.Path(r'D:\00_Chen\Task08\data\test\rename_nifti\stroke')
     upload_manager = UploadSqlManager(args.input)

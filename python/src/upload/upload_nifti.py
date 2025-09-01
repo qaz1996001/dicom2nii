@@ -1,28 +1,16 @@
-import re
-
-from . import SQL_WEB_URL
-
-import argparse
 import pathlib
 from concurrent.futures import ThreadPoolExecutor
 from typing import Union
 
-import botocore.response
-from boto3.session import Session
-import boto3  # 加载boto3 skd包
 import requests
 
-import pathlib
-
-from pydicom import dcmread, FileDataset,Dataset,DataElement
-import orjson
+from . import SQL_WEB_URL
 
 
 class UploadManager:
     web_url = SQL_WEB_URL
 
-    def __init__(self, input_path: Union[str, pathlib.Path],
-                 *args, **kwargs):
+    def __init__(self, input_path: Union[str, pathlib.Path], *args, **kwargs):
         self._input_path = pathlib.Path(input_path)
 
     # @staticmethod
@@ -91,21 +79,25 @@ class UploadManager:
     #     self.upload_patient_study(study_path=study_path)
     #     self.upload_series(study_path=study_path)
 
-    def upload_file_meta_data_to_sql(self, study_path: pathlib.Path, path: pathlib.Path, is_niigz_meta=True):
+    def upload_file_meta_data_to_sql(
+        self, study_path: pathlib.Path, path: pathlib.Path, is_niigz_meta=True
+    ):
         if is_niigz_meta:
-            Key = f'{study_path.name}/{path.parent.name}/{path.name}'
+            Key = f"{study_path.name}/{path.parent.name}/{path.name}"
         else:
-            Key = f'{study_path.name}/{path.name}'
-        files = {'file': open(path, 'rb')}
-        form_data = dict(file_url= Key)
-        print('file_url', Key)
+            Key = f"{study_path.name}/{path.name}"
+        files = {"file": open(path, "rb")}
+        form_data = {"file_url": Key}
+        print("file_url", Key)
         # form_data = dict(file_name= path.name,
         #                  file_size= object.get('ContentLength'),
         #                  file_datetime= object.get('LastModified'),
         #                  file_type= path.suffix,
         #                  file_url= Key,)
         with requests.Session() as session:
-            response = session.post(url=f'{self.web_url}file/',files=files, data=form_data)
+            response = session.post(
+                url=f"{self.web_url}file/", files=files, data=form_data
+            )
             print(response)
 
     def upload(self, study_path):
@@ -116,22 +108,23 @@ class UploadManager:
                 for path in series_path.iterdir():
                     self.upload_file_meta_data_to_sql(study_path=study_path, path=path)
             if series_path.is_file():
-                self.upload_file_meta_data_to_sql(study_path=study_path, path=series_path,is_niigz_meta=False)
-
+                self.upload_file_meta_data_to_sql(
+                    study_path=study_path, path=series_path, is_niigz_meta=False
+                )
 
     def run(self, executor: Union[ThreadPoolExecutor, None] = None):
-        is_dir_flag = all(list(map(lambda x: x.is_dir(), self.input_path.iterdir())))
+        is_dir_flag = all(x.is_dir() for x in self.input_path.iterdir())
         if is_dir_flag:
             study_path_list = list(self.input_path.iterdir())
             for study_path in study_path_list:
                 if executor:
-                    future = executor.submit(self.upload, study_path=study_path)
+                    executor.submit(self.upload, study_path=study_path)
                 else:
                     self.upload(study_path=study_path)
                 # break
         else:
             if executor:
-                future = executor.submit(self.upload, study_path=self.input_path)
+                executor.submit(self.upload, study_path=self.input_path)
             else:
                 self.upload(study_path=self.input_path)
             # break
