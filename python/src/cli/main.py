@@ -18,8 +18,8 @@ from .commands import (
 def create_parser() -> argparse.ArgumentParser:
     """建立主要的參數解析器"""
     parser = argparse.ArgumentParser(
-        prog='dicom2nii',
-        description='DICOM 和 NIfTI 檔案轉換工具',
+        prog="dicom2nii",
+        description="DICOM 和 NIfTI 檔案轉換工具",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用範例:
@@ -34,24 +34,23 @@ def create_parser() -> argparse.ArgumentParser:
 
   # 生成報告
   python -m src.cli.main report --input /path/to/data --type both
-        """
+        """,
     )
 
     # 添加子命令
-    subparsers = parser.add_subparsers(dest='command', help='可用的命令')
+    subparsers = parser.add_subparsers(dest="command", help="可用的命令")
 
     # 註冊命令
     commands: dict[str, type[BaseCommand]] = {
-        'convert': DicomToNiftiCommand,
-        'nifti2dicom': NiftiToDicomCommand,
-        'upload': UploadCommand,
-        'report': ReportCommand,
+        "convert": DicomToNiftiCommand,
+        "nifti2dicom": NiftiToDicomCommand,
+        "upload": UploadCommand,
+        "report": ReportCommand,
     }
 
     for command_name, command_class in commands.items():
         command_parser = subparsers.add_parser(
-            command_name,
-            help=f'{command_name} 命令'
+            command_name, help=f"{command_name} 命令"
         )
         command_instance = command_class()
         command_instance.add_arguments(command_parser)
@@ -70,7 +69,7 @@ def main() -> None:
         args = parser.parse_args()
 
         # 檢查是否提供了命令
-        if not hasattr(args, 'command_handler'):
+        if not hasattr(args, "command_handler"):
             parser.print_help()
             sys.exit(1)
 
@@ -98,5 +97,5 @@ def main() -> None:
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
